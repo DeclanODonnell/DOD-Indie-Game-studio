@@ -783,10 +783,14 @@ function refreshUI() {
   renderDropPills();
   document.body.classList.toggle("is-frenzy", state.frenzy);
   updateTopPauseLabel();
+  syncTouchMode();
 }
 
 function setActiveSlot(slotKey) {
   if (slotKey !== "fists" && !state.inventory[slotKey]) {
+    return;
+  }
+  if (state.activeSlot === slotKey) {
     return;
   }
   state.activeSlot = slotKey;
@@ -1056,15 +1060,15 @@ function gameOver() {
 }
 
 function showMainMenu() {
-  state.screen = "menu";
-  state.wavePlan = null;
-  state.enemies = [];
-  state.projectiles = [];
+  state = getFreshState();
+  createDecalsAndBarrels();
   DOM.menuOverlay.hidden = false;
   DOM.tutorialOverlay.hidden = true;
   DOM.pauseOverlay.hidden = true;
   DOM.gameOverOverlay.hidden = true;
   AUDIO.stopMusic();
+  renderLogs();
+  renderDropPills();
   refreshUI();
 }
 
@@ -1330,7 +1334,7 @@ function damageEnemy(enemy, baseDamage, options = {}) {
     headshot = true;
   }
 
-  if (Math.random() < ((options.critChance ?? getCritChance()) + (WEAPONS[getActiveWeaponState().weapon.id]?.critBonus || 0))) {
+  if (Math.random() < (options.critChance ?? getCritChance())) {
     damage *= 1.45;
     crit = true;
   }
@@ -2376,7 +2380,9 @@ function loop(now) {
 }
 
 function syncTouchMode() {
-  DOM.touchControls.setAttribute("aria-hidden", SESSION.mobile ? "false" : "true");
+  const active = SESSION.mobile && (state.screen === "playing" || state.screen === "intermission");
+  DOM.touchControls.hidden = !active;
+  DOM.touchControls.setAttribute("aria-hidden", active ? "false" : "true");
 }
 
 function worldPointFromClient(clientX, clientY) {
@@ -2442,6 +2448,19 @@ function attachTouchPad(pad, thumb, key) {
     const touch = [...event.changedTouches].find((entry) => entry.identifier === touchId);
     if (!touch) return;
 
+    if (key === "move") {
+      state.touch.moveId = null;
+      state.moveStick.x = 0;
+      state.moveStick.y = 0;
+    } else {
+      state.touch.aimId = null;
+      state.aimStick.active = false;
+      state.mouse.down = false;
+    }
+    resetTouchPad(thumb);
+  }, { passive: true });
+
+  pad.addEventListener("touchcancel", () => {
     if (key === "move") {
       state.touch.moveId = null;
       state.moveStick.x = 0;
@@ -2519,6 +2538,10 @@ function bindEvents() {
     const key = event.key.toLowerCase();
     KEYS[key] = true;
 
+    if (event.repeat && ["r", " ", "escape", "p", "1", "2", "3", "q", "m"].includes(key)) {
+      return;
+    }
+
     if (key === "r") {
       startReload();
     } else if (key === " ") {
@@ -2548,7 +2571,15 @@ function bindEvents() {
   attachTouchPad(DOM.aimPad, DOM.aimThumb, "aim");
 
   window.addEventListener("blur", () => {
+    Object.keys(KEYS).forEach((key) => delete KEYS[key]);
     state.mouse.down = false;
+    state.moveStick.x = 0;
+    state.moveStick.y = 0;
+    state.aimStick.active = false;
+    state.touch.moveId = null;
+    state.touch.aimId = null;
+    resetTouchPad(DOM.moveThumb);
+    resetTouchPad(DOM.aimThumb);
     if (state.screen === "playing" || state.screen === "intermission") {
       pauseGame();
     }

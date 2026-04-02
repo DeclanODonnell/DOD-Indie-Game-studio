@@ -781,6 +781,11 @@ function initActionButtons() {
 function initRevealAnimations() {
   const sections = document.querySelectorAll(".reveal");
 
+  if (!("IntersectionObserver" in window)) {
+    sections.forEach((section) => section.classList.add("is-visible"));
+    return;
+  }
+
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {

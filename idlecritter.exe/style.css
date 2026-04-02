@@ -32,6 +32,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   font-family: "Chakra Petch", sans-serif;
   color: var(--text);
@@ -586,6 +587,7 @@ h3,
   position: relative;
   min-height: clamp(420px, 66svh, 760px);
   overflow: hidden;
+  isolation: isolate;
   border: 1px solid var(--line);
   background:
     radial-gradient(circle at 50% 62%, rgba(var(--accent-rgb), 0.16), transparent 28%),
@@ -651,6 +653,20 @@ h3,
   z-index: 2;
 }
 
+.main-creature-display::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 17%;
+  width: 62%;
+  height: 16%;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.34) 0%, rgba(0, 0, 0, 0.18) 38%, transparent 72%);
+  filter: blur(10px);
+  opacity: 0.9;
+}
+
 .main-creature {
   display: block;
   padding: 0;
@@ -662,6 +678,10 @@ h3,
   touch-action: manipulation;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+.main-creature:focus-visible {
+  outline: none;
 }
 
 .main-creature-glow {
@@ -945,12 +965,7 @@ h3,
   box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.26);
 }
 
-.main-creature:hover .creature-sprite,
-.main-creature:focus-visible .creature-sprite {
-  transform: translateY(-6px) scale(1.02);
-}
-
-.main-creature.is-popping .creature-sprite {
+.main-creature-display.is-popping {
   animation: click-burst 260ms ease;
 }
 
@@ -962,6 +977,12 @@ h3,
   border-radius: 24px;
   transform: scale(0.72);
   clip-path: var(--pixel-cut);
+}
+
+.main-creature:hover .hit-ring,
+.main-creature:focus-visible .hit-ring {
+  opacity: 0.4;
+  transform: scale(0.92);
 }
 
 .main-creature.is-popping .hit-ring {
@@ -2301,6 +2322,7 @@ h3,
 
 .helper-swarm {
   pointer-events: none;
+  overflow: hidden;
 }
 
 .helper-echo {

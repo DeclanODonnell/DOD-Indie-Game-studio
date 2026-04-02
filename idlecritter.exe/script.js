@@ -470,7 +470,6 @@ const audioState = {
 };
 
 const renderCache = {
-  mainSprite: "",
   helperSwarm: "",
   evolutionChoices: ""
 };
@@ -1286,6 +1285,12 @@ function renderMainCreature() {
   ensureMainCreatureChrome();
   const species = getCurrentSpecies();
   const rankDef = getRankDefinition();
+  DOM.mainCreatureDisplay.hidden = false;
+  DOM.mainCreature.hidden = false;
+  DOM.mainCreatureDisplay.style.display = "grid";
+  DOM.mainCreatureDisplay.style.visibility = "visible";
+  DOM.mainCreature.style.display = "block";
+  DOM.mainCreature.style.visibility = "visible";
   DOM.mainCreatureDisplay.dataset.creature = species.id;
   DOM.mainCreatureDisplay.dataset.rank = String(state.rank);
   DOM.mainCreatureDisplay.style.setProperty("--main-growth-scale", getDisplayGrowthScale(getCurrentGrowthScale()).toFixed(3));
@@ -1298,6 +1303,19 @@ function renderMainCreature() {
   DOM.mainCreature.style.setProperty("--main-secondary", species.secondary);
   DOM.mainCreatureTitle.textContent = species.name.toUpperCase();
   DOM.mainCreatureRankTag.textContent = rankDef.label.toUpperCase();
+}
+
+function getSceneMetrics() {
+  const width = DOM.scene?.clientWidth || 720;
+  const height = DOM.scene?.clientHeight || 520;
+  return {
+    width,
+    height,
+    baseRadiusX: clamp(width * 0.2, 88, 190),
+    baseRadiusY: clamp(height * 0.15, 72, 150),
+    ringStepX: clamp(width * 0.055, 22, 42),
+    ringStepY: clamp(height * 0.045, 18, 34)
+  };
 }
 
 function getHelperVisualEntries() {
@@ -1331,7 +1349,9 @@ function renderHelperSwarm() {
     return;
   }
 
-  const signature = `${getCurrentSpecies().id}:${state.rank}:${state.helperCounts.join("-")}`;
+  const sceneMetrics = getSceneMetrics();
+  const sceneSignature = `${Math.round(sceneMetrics.width)}x${Math.round(sceneMetrics.height)}`;
+  const signature = `${getCurrentSpecies().id}:${state.rank}:${state.helperCounts.join("-")}:${sceneSignature}`;
   if (renderCache.helperSwarm === signature) {
     return;
   }
@@ -1344,8 +1364,8 @@ function renderHelperSwarm() {
     const slotsInRing = 12 + ring * 6;
     const slot = index % slotsInRing;
     const angle = (slot / slotsInRing) * Math.PI * 2 + (ring % 2) * 0.2;
-    const radiusX = 132 + ring * 40 + (slot % 3) * 5;
-    const radiusY = 98 + ring * 28 + (slot % 4) * 5;
+    const radiusX = sceneMetrics.baseRadiusX + ring * sceneMetrics.ringStepX + (slot % 3) * 4;
+    const radiusY = sceneMetrics.baseRadiusY + ring * sceneMetrics.ringStepY + (slot % 4) * 4;
     const x = Math.cos(angle) * radiusX;
     const y = Math.sin(angle) * radiusY;
     const driftX = `${Math.cos(angle + 0.6) * (8 + ring * 1.5)}px`;
@@ -1722,6 +1742,7 @@ function resetAnimalProgress() {
   state.rankProgress = 0;
   state.helperCounts = Array(HELPER_BLUEPRINTS.length).fill(0);
   state.ownedUpgradeIds = [];
+  state.activeTab = "helpers";
   state.temporaryEffects = [];
   state.activeEvent = null;
   state.rankReady = false;
@@ -1733,8 +1754,9 @@ function resetAnimalProgress() {
   closeEvolutionOverlay();
   scheduleNextEvent();
   renderCache.helperSwarm = "";
-  renderCache.mainSprite = "";
   renderCache.evolutionChoices = "";
+  DOM.particleLayer.replaceChildren();
+  DOM.floatLayer.replaceChildren();
   markDirty();
 }
 
@@ -1768,7 +1790,6 @@ function rankUpCreature() {
   state.rank += 1;
   state.rankProgress = 0;
   state.rankReady = false;
-  renderCache.mainSprite = "";
   renderCache.helperSwarm = "";
   triggerFlash();
   triggerShake(420);
@@ -2012,7 +2033,11 @@ function handleCreatureClick(event) {
   grantResources(amount);
   state.clicks += 1;
   DOM.mainCreature.classList.add("is-popping");
-  window.setTimeout(() => DOM.mainCreature.classList.remove("is-popping"), 260);
+  DOM.mainCreatureDisplay.classList.add("is-popping");
+  window.setTimeout(() => {
+    DOM.mainCreature.classList.remove("is-popping");
+    DOM.mainCreatureDisplay.classList.remove("is-popping");
+  }, 260);
   spawnFloatingText(`+${formatNumber(amount)}`, point.x, point.y, crit ? "is-crit" : "");
   spawnParticles(point.x, point.y, crit ? 14 : 8);
   playClickSound();
@@ -2113,6 +2138,10 @@ function init() {
   renderChoiceSprites();
   bindEvents();
   renderTabs();
+  window.addEventListener("resize", () => {
+    renderCache.helperSwarm = "";
+    markDirty();
+  });
   window.requestAnimationFrame(tick);
 }
 
