@@ -850,6 +850,9 @@ function init() {
   if (lineCanvasWrap) {
     lineCanvasWrap.addEventListener("touchstart", handleTouchStart, { passive: true });
     lineCanvasWrap.addEventListener("touchend", handleTouchEnd, { passive: true });
+    lineCanvasWrap.addEventListener("touchcancel", () => {
+      state.swipeStart = null;
+    }, { passive: true });
   }
 
   window.addEventListener("resize", () => {

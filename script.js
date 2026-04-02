@@ -69,6 +69,7 @@ function renderGames() {
     link.className = "game-link";
     link.href = game.link;
     link.textContent = game.linkLabel;
+    link.setAttribute("aria-label", `Open ${game.title}`);
 
     copy.append(title, summary, status);
     row.append(copy, link);
@@ -80,6 +81,11 @@ function renderGames() {
 
 function initRevealAnimations() {
   const sections = document.querySelectorAll(".reveal");
+
+  if (!("IntersectionObserver" in window)) {
+    sections.forEach((section) => section.classList.add("is-visible"));
+    return;
+  }
 
   const observer = new IntersectionObserver(
     (entries) => {

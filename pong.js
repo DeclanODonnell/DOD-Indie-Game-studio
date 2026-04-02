@@ -569,6 +569,12 @@ function initPong() {
     measurePongBoard();
     renderPongGame();
   });
+
+  window.addEventListener("blur", () => {
+    pongState.moveUp = false;
+    pongState.moveDown = false;
+    syncPongPlayerMove();
+  });
 }
 
 initPong();

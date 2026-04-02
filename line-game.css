@@ -18,6 +18,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   font-family: "Chakra Petch", sans-serif;
   color: var(--text);
@@ -160,11 +161,29 @@ strong {
   background: linear-gradient(135deg, var(--yellow) 0%, var(--yellow-strong) 100%);
   font-weight: 700;
   cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 
 .topbar-button-ghost {
   color: var(--yellow);
   background: rgba(255, 212, 0, 0.05);
+}
+
+.brand,
+.difficulty-button {
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.brand:hover,
+.brand:focus-visible,
+.topbar-button:hover,
+.topbar-button:focus-visible,
+.difficulty-button:hover,
+.difficulty-button:focus-visible {
+  outline: none;
+  transform: translateY(-2px);
+  border-color: rgba(255, 212, 0, 0.3);
+  box-shadow: 0 0 0 1px rgba(255, 212, 0, 0.12), var(--shadow);
 }
 
 .game-main {

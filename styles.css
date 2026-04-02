@@ -23,6 +23,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   font-family: "Chakra Petch", sans-serif;
   color: var(--text);
@@ -95,6 +96,7 @@ strong {
   border-radius: 999px;
   background: rgba(5, 5, 5, 0.82);
   box-shadow: var(--shadow);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .brand-mark {
@@ -155,6 +157,21 @@ strong {
 .footer-link {
   color: var(--yellow);
   font-weight: 700;
+  transition: color 180ms ease;
+}
+
+.brand:hover,
+.brand:focus-visible,
+.game-link:focus-visible,
+.footer-link:focus-visible {
+  outline: none;
+  border-color: rgba(255, 212, 0, 0.32);
+  box-shadow: 0 0 0 1px rgba(255, 212, 0, 0.14), var(--shadow);
+}
+
+.brand:hover,
+.brand:focus-visible {
+  transform: translateY(-2px);
 }
 
 .footer-link:hover,
@@ -194,6 +211,7 @@ h1 {
   border-radius: var(--radius-lg);
   background: linear-gradient(180deg, rgba(11, 11, 11, 0.94) 0%, rgba(6, 6, 6, 0.98) 100%);
   box-shadow: var(--shadow);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .game-copy {
@@ -222,7 +240,14 @@ h1 {
   color: #050505;
   background: linear-gradient(135deg, var(--yellow) 0%, var(--yellow-strong) 100%);
   font-weight: 700;
-  transition: transform 180ms ease;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.game-row:hover,
+.game-row:focus-within {
+  transform: translateY(-2px);
+  border-color: rgba(255, 212, 0, 0.28);
+  box-shadow: 0 30px 84px rgba(0, 0, 0, 0.46);
 }
 
 .game-link:hover,
@@ -256,5 +281,6 @@ h1 {
   .site-footer {
     flex-direction: column;
     align-items: start;
+    padding-top: 16px;
   }
 }

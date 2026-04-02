@@ -536,6 +536,9 @@ function initSnake() {
   if (snakeCanvasWrap) {
     snakeCanvasWrap.addEventListener("touchstart", handleSnakeTouchStart, { passive: true });
     snakeCanvasWrap.addEventListener("touchend", handleSnakeTouchEnd, { passive: true });
+    snakeCanvasWrap.addEventListener("touchcancel", () => {
+      snakeState.swipeStart = null;
+    }, { passive: true });
   }
 
   window.addEventListener("resize", () => {
