@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stickman Defender | DOD Web Arcade</title>
+  <meta
+    name="description"
+    content="Top-down stickman survival shooter with campfire defense, waves, zombies, bosses, upgrades, and a mystery box."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="icon" type="image/png" href="../dodwebarcadelogo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page-shell" data-fullscreen-root>
+    <header class="topbar">
+      <a class="brand" href="../index.html" aria-label="Back to games">
+        <span class="brand-mark">
+          <img class="brand-mark-image" src="../dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+        </span>
+        <span class="brand-copy">
+          <strong>Stickman Defender</strong>
+          <span>Back to games</span>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <button class="topbar-button topbar-button-ghost" data-fullscreen-button type="button">Fullscreen</button>
+        <button id="topMuteButton" class="topbar-button topbar-button-ghost" type="button">Mute</button>
+        <button id="topPauseButton" class="topbar-button" type="button">Pause</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="arena-column">
+        <div class="hero-copy">
+          <h1>Stickman Defender</h1>
+          <p>Hold the arena, protect the campfire, hit the box between waves, and survive the frenzy when everything goes wrong.</p>
+        </div>
+
+        <section class="hud-grid" aria-label="Game HUD">
+          <article class="hud-card">
+            <span>Health</span>
+            <strong id="healthValue">100</strong>
+          </article>
+          <article class="hud-card">
+            <span>Armor</span>
+            <strong id="armorValue">50</strong>
+          </article>
+          <article class="hud-card">
+            <span>Weapon</span>
+            <strong id="weaponValue">Pistol</strong>
+          </article>
+          <article class="hud-card">
+            <span>Ammo</span>
+            <strong id="ammoValue">12 / 72</strong>
+          </article>
+          <article class="hud-card">
+            <span>Camp Points</span>
+            <strong id="pointsValue">0</strong>
+          </article>
+          <article class="hud-card">
+            <span>Wave</span>
+            <strong id="waveValue">0</strong>
+          </article>
+          <article class="hud-card">
+            <span>Zombies Left</span>
+            <strong id="zombiesValue">0</strong>
+          </article>
+          <article class="hud-card">
+            <span>Campfire</span>
+            <strong id="campfireValue">100%</strong>
+          </article>
+          <article class="hud-card">
+            <span>Dash</span>
+            <strong id="dashValue">Ready</strong>
+          </article>
+        </section>
+
+        <div class="canvas-shell" id="canvasShell">
+          <canvas id="gameCanvas" aria-label="Stickman Defender game arena"></canvas>
+
+          <div class="banner" id="waveBanner" hidden>Wave 1</div>
+          <div class="banner banner-boss" id="bossBanner" hidden>Boss Incoming</div>
+
+          <div class="overlay" id="menuOverlay">
+            <div class="overlay-card overlay-card-wide">
+              <p class="eyebrow">Paper Ops</p>
+              <h2>Stickman Defender</h2>
+              <p class="overlay-copy">Fight through the first ten waves, cash in Camp Points between rounds, and keep the campfire standing for as long as possible.</p>
+              <div class="menu-actions">
+                <button id="playButton" class="menu-button" type="button">Play</button>
+                <button id="howButton" class="menu-button menu-button-ghost" type="button">How to Play</button>
+                <button id="menuMuteButton" class="menu-button menu-button-ghost" type="button">Mute</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="overlay" id="tutorialOverlay" hidden>
+            <div class="overlay-card">
+              <p class="eyebrow">How To Play</p>
+              <h2>Defend the fire.</h2>
+              <div class="tutorial-list">
+                <p>`WASD` / arrows move. Mouse aims. Click shoots. `R` reloads. `Space` dashes.</p>
+                <p>On mobile: left stick moves, right pad aims and fires, side buttons reload and dash.</p>
+                <p>Zombies attack you and the campfire. Clear the wave, return to the fire, buy upgrades, then start the next round.</p>
+                <p>If the campfire dies, frenzy mode begins and bosses start dropping in fast until you do too.</p>
+              </div>
+              <div class="menu-actions">
+                <button id="tutorialStartButton" class="menu-button" type="button">Start Run</button>
+                <button id="tutorialCloseButton" class="menu-button menu-button-ghost" type="button">Close</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="overlay" id="pauseOverlay" hidden>
+            <div class="overlay-card">
+              <p class="eyebrow">Paused</p>
+              <h2>Hold position.</h2>
+              <div class="menu-actions">
+                <button id="resumeButton" class="menu-button" type="button">Resume</button>
+                <button id="restartButton" class="menu-button menu-button-ghost" type="button">Restart</button>
+                <button id="pauseMuteButton" class="menu-button menu-button-ghost" type="button">Mute</button>
+                <button id="menuButton" class="menu-button menu-button-ghost" type="button">Main Menu</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="overlay" id="gameOverOverlay" hidden>
+            <div class="overlay-card">
+              <p class="eyebrow">Run Over</p>
+              <h2>Camp lost.</h2>
+              <div class="score-grid">
+                <div><span>Score</span><strong id="finalScoreValue">0</strong></div>
+                <div><span>Waves</span><strong id="finalWaveValue">0</strong></div>
+                <div><span>Kills</span><strong id="finalKillsValue">0</strong></div>
+                <div><span>Headshots</span><strong id="finalHeadshotsValue">0</strong></div>
+                <div><span>Boss Kills</span><strong id="finalBossKillsValue">0</strong></div>
+                <div><span>Campfire</span><strong id="finalCampfireValue">Standing</strong></div>
+              </div>
+              <div class="menu-actions">
+                <button id="endRestartButton" class="menu-button" type="button">Play Again</button>
+                <button id="endMenuButton" class="menu-button menu-button-ghost" type="button">Main Menu</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="touch-controls" id="touchControls" aria-hidden="true">
+            <div class="touch-pad move-pad" id="movePad">
+              <span class="touch-ring"></span>
+              <span class="touch-thumb" id="moveThumb"></span>
+            </div>
+
+            <div class="touch-pad aim-pad" id="aimPad">
+              <span class="touch-ring"></span>
+              <span class="touch-thumb" id="aimThumb"></span>
+            </div>
+
+            <div class="touch-buttons">
+              <button id="reloadButton" class="touch-button" type="button">Reload</button>
+              <button id="dashButton" class="touch-button" type="button">Dash</button>
+              <button id="touchPauseButton" class="touch-button touch-button-ghost" type="button">Pause</button>
+            </div>
+          </div>
+        </div>
+
+        <section class="status-strip">
+          <div class="status-chip">
+            <span>Status</span>
+            <strong id="combatStateValue">Main menu</strong>
+          </div>
+          <div class="status-chip">
+            <span>Hint</span>
+            <strong id="hintText">Press Play to start.</strong>
+          </div>
+          <div class="status-chip">
+            <span>Effects</span>
+            <strong id="effectText">None</strong>
+          </div>
+        </section>
+      </section>
+
+      <aside class="sidebar">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Loadout</p>
+              <h2>Weapons</h2>
+            </div>
+            <span id="weaponHintValue">Fists always available</span>
+          </div>
+
+          <div class="weapon-slots" id="weaponSlots"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Campfire</p>
+              <h2>Supply Stop</h2>
+            </div>
+            <span id="campAccessValue">Return to the fire</span>
+          </div>
+
+          <button id="mysteryBoxButton" class="panel-button" type="button">Mystery Box</button>
+          <p id="boxResultValue" class="panel-copy">The crate is quiet.</p>
+          <button id="nextWaveButton" class="panel-button panel-button-accent" type="button">Start Wave 1</button>
+        </section>
+
+        <section class="panel panel-scroll">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Upgrades</p>
+              <h2>Spend Points</h2>
+            </div>
+            <span id="upgradeHintValue">Available between rounds</span>
+          </div>
+
+          <div id="upgradeList" class="upgrade-list"></div>
+        </section>
+
+        <section class="panel panel-scroll">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Field Intel</p>
+              <h2>Combat Log</h2>
+            </div>
+            <span id="dropHintValue">Pickups and alerts</span>
+          </div>
+
+          <div id="dropList" class="drop-list"></div>
+          <div id="logList" class="log-list"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script src="../fullscreen.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

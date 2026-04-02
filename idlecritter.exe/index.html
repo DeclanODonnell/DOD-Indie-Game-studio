@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animal Clicker | DOD Web Arcade</title>
+  <meta
+    name="description"
+    content="Animal Clicker is a polished arcade idle clicker with creature evolution, helpers, upgrades, and glitch events."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Press+Start+2P&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="icon" type="image/png" href="../dodwebarcadelogo.png">
+  <link rel="stylesheet" href="style.css?v=animal-visible-5">
+</head>
+<body class="theme-ant is-choosing">
+  <section class="overlay intro-overlay" id="introOverlay" aria-label="Choose your character">
+    <div class="overlay-panel intro-panel">
+      <p class="eyebrow">DOD Web Arcade / idle mutation chamber</p>
+      <h1>CHOOSE YOUR CHARACTER</h1>
+      <p class="overlay-copy">
+        Start in Stage 1 with Ant, Fly, or Bee. Every animal must climb Worker, Enforcer, Queen, Cyber, and God before the next stage unlocks.
+      </p>
+
+      <div class="choice-grid">
+        <button class="choice-card" type="button" data-lineage="ant">
+          <span class="choice-glow"></span>
+          <span class="choice-sprite-host" data-choice-sprite="ant" aria-hidden="true"></span>
+          <span class="choice-name">Worker Ant</span>
+          <span class="choice-desc">Build your colony and gather sugar.</span>
+        </button>
+
+        <button class="choice-card" type="button" data-lineage="fly">
+          <span class="choice-glow"></span>
+          <span class="choice-sprite-host" data-choice-sprite="fly" aria-hidden="true"></span>
+          <span class="choice-name">Worker Fly</span>
+          <span class="choice-desc">Land on filth and grow your swarm.</span>
+        </button>
+
+        <button class="choice-card" type="button" data-lineage="bee">
+          <span class="choice-glow"></span>
+          <span class="choice-sprite-host" data-choice-sprite="bee" aria-hidden="true"></span>
+          <span class="choice-name">Worker Bee</span>
+          <span class="choice-desc">Collect pollen and power your hive.</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="game-shell" id="gameShell" hidden data-fullscreen-root>
+    <div class="screen-flash" id="screenFlash" aria-hidden="true"></div>
+
+    <header class="topbar pixel-panel">
+      <a class="brand" href="../index.html" aria-label="Back to DOD Web Arcade">
+        <span class="brand-mark">
+          <img class="brand-mark-image" src="../dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+        </span>
+        <span class="brand-copy">
+          <strong>Animal Clicker</strong>
+          <span>Back to arcade</span>
+        </span>
+      </a>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span>Stage</span>
+          <strong id="stageValue">Stage 1</strong>
+        </div>
+        <div class="stat-card">
+          <span>Creature</span>
+          <strong id="creatureNameValue">Ant</strong>
+        </div>
+        <div class="stat-card">
+          <span>Resource</span>
+          <strong id="resourceNameValue">Sugar</strong>
+        </div>
+        <div class="stat-card">
+          <span>Total</span>
+          <strong id="resourceTotalValue">0</strong>
+        </div>
+        <div class="stat-card">
+          <span>Per Sec</span>
+          <strong id="resourcePerSecondValue">0 / sec</strong>
+        </div>
+      </div>
+
+      <div class="topbar-controls">
+        <button class="sound-button" data-fullscreen-button type="button">Fullscreen</button>
+        <button id="muteButton" class="sound-button" type="button" aria-pressed="false">SFX ON</button>
+      </div>
+    </header>
+
+    <main class="content-grid">
+      <section class="arena-wrap pixel-panel">
+        <div class="arena-head">
+          <div>
+            <p class="eyebrow" id="formEyebrow">Stage 1 / Worker rank</p>
+            <h2 id="formTitle">Worker Ant</h2>
+          </div>
+
+          <div class="micro-stats">
+            <div class="micro-card">
+              <span>Click Power</span>
+              <strong id="clickPowerValue">1</strong>
+            </div>
+            <div class="micro-card">
+              <span>Rank</span>
+              <strong id="rankValue">Worker</strong>
+            </div>
+            <div class="micro-card">
+              <span>Click Boost</span>
+              <strong id="permanentBonusValue">x1.00</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="warning-banner" id="warningBanner" hidden></div>
+
+        <div class="scene" id="scene">
+          <div class="ambient-grid" aria-hidden="true"></div>
+          <div class="helper-swarm" id="helperSwarm" aria-hidden="true"></div>
+          <div class="particle-layer" id="particleLayer" aria-hidden="true"></div>
+          <div class="float-layer" id="floatLayer" aria-hidden="true"></div>
+
+          <div id="mainCreatureDisplay" class="main-creature-display" aria-hidden="true">
+            <span class="main-creature-glow" aria-hidden="true"></span>
+            <span id="mainCreaturePlate" class="main-creature-plate" aria-hidden="true"></span>
+            <span id="mainCreatureRankTag" class="main-creature-rank-tag" aria-hidden="true">WORKER</span>
+            <span id="mainCreatureTitle" class="main-creature-title" aria-hidden="true">ANT</span>
+          </div>
+
+          <button id="mainCreature" class="main-creature" type="button" aria-label="Collect resources">
+            <span class="hit-ring" aria-hidden="true"></span>
+          </button>
+
+          <div class="event-card pixel-panel" id="eventCard" hidden>
+            <p class="eyebrow" id="eventEyebrow">Random Event</p>
+            <h3 id="eventTitle">Resource Burst</h3>
+            <p id="eventDescription" class="event-copy">Tap it before it fades.</p>
+            <p id="eventTimer" class="event-timer">8.0s</p>
+            <button id="eventActionButton" class="event-button" type="button">Claim</button>
+          </div>
+        </div>
+
+        <div class="boost-bar">
+          <span class="boost-label">Live boosts</span>
+          <div class="boost-list" id="boostList">
+            <span class="boost-chip boost-chip-empty">No boosts live</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="shop-panel pixel-panel">
+        <div class="shop-head">
+          <div>
+            <p class="eyebrow">Swarm control</p>
+            <h2>Shop</h2>
+          </div>
+          <div class="shop-mini">
+            <span id="helperTotalValue">0 helpers</span>
+            <span id="eventCountdownValue">Event scan online</span>
+          </div>
+        </div>
+
+        <div class="tab-row" role="tablist" aria-label="Shop tabs">
+          <button class="tab-button is-active" id="helpersTabButton" type="button" data-tab="helpers" role="tab" aria-selected="true">Helpers</button>
+          <button class="tab-button" id="upgradesTabButton" type="button" data-tab="upgrades" role="tab" aria-selected="false">Upgrades</button>
+        </div>
+
+        <div class="shop-scroll">
+          <section class="shop-list" id="helpersTab" role="tabpanel" aria-labelledby="helpersTabButton"></section>
+          <section class="shop-list" id="upgradesTab" role="tabpanel" aria-labelledby="upgradesTabButton" hidden></section>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="actionbar pixel-panel">
+      <div class="evolve-copy">
+        <p class="eyebrow">Progress status</p>
+        <h2 id="evolutionStatusValue">Build your first form</h2>
+        <p id="evolutionHintValue" class="action-copy">Fill the bar to unlock the next rank, then finish God form to reach the next stage.</p>
+      </div>
+
+      <div class="progress-track" aria-hidden="true">
+        <span id="evolutionProgressFill" class="progress-fill"></span>
+      </div>
+
+      <div class="action-row">
+        <button id="evolveButton" class="action-button action-primary" type="button" hidden>Evolve Now</button>
+        <button id="stayButton" class="action-button action-ghost" type="button" hidden>Stay as current creature for now</button>
+      </div>
+    </footer>
+
+    <section class="overlay evolution-overlay" id="evolutionOverlay" hidden aria-label="Evolution choices">
+      <div class="overlay-panel evolution-panel">
+        <p class="eyebrow" id="evolutionStageEyebrow">Next stage ready</p>
+        <h2 id="evolutionOverlayTitle">Choose your next creature</h2>
+        <p class="overlay-copy" id="evolutionOverlayCopy">
+          Your animal run resets, your bonus stays, and the next creature takes over the arena.
+        </p>
+
+        <div class="evolution-choice-grid" id="evolutionChoices"></div>
+
+        <div class="overlay-actions">
+          <button id="evolutionDelayButton" class="action-button action-ghost" type="button">Stay as current creature for now</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+  </div>
+
+  <script src="../fullscreen.js?v=animal-visible-5"></script>
+  <script src="script.js?v=animal-visible-5"></script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signal Sudoku | DOD Web Arcade</title>
+  <meta
+    name="description"
+    content="Signal Sudoku is a black-and-yellow browser Sudoku with Rookie, Cipher, and Impossible modes."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="icon" type="image/png" href="dodwebarcadelogo.png">
+  <link rel="stylesheet" href="sudoku.css">
+</head>
+<body>
+  <div class="game-shell" data-fullscreen-root>
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="Back to DOD arcade">
+        <span class="brand-mark">
+          <img class="brand-mark-image" src="dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+        </span>
+        <span class="brand-copy">
+          <strong>Signal Sudoku</strong>
+          <span>Back to arcade</span>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <div class="topbar-signals" aria-label="Game status">
+          <span class="signal-chip">Browser Game</span>
+          <span class="signal-chip">Black + Yellow</span>
+          <span class="signal-chip">Logic Grid</span>
+        </div>
+        <button class="action-button" data-fullscreen-button type="button">Fullscreen</button>
+      </div>
+    </header>
+
+    <main class="game-main">
+      <section class="hero-panel reveal">
+        <div class="hero-copy">
+          <p class="eyebrow">DOD Arcade / logic cabinet</p>
+          <div class="command-strip" aria-label="Mode notes">
+            <span>boot.puzzle("signal_sudoku")</span>
+            <span>modes = rookie / cipher / impossible</span>
+            <span>notes.toggle = N</span>
+          </div>
+
+          <h1>Signal <span class="glitch-word" data-text="Sudoku">Sudoku</span></h1>
+          <p class="hero-text">
+            Pick a mode, keep the grid clean, and survive three lives.
+          </p>
+
+          <div class="mode-switcher" id="mode-switcher" aria-label="Difficulty modes">
+            <button class="mode-button is-active" type="button" data-mode="rookie">
+              <strong>Rookie</strong>
+              <span>More clues. Easier reads.</span>
+            </button>
+            <button class="mode-button" type="button" data-mode="cipher">
+              <strong>Cipher</strong>
+              <span>Balanced puzzle pressure.</span>
+            </button>
+            <button class="mode-button" type="button" data-mode="impossible">
+              <strong>Impossible</strong>
+              <span>Low clues. Harder deductions.</span>
+            </button>
+          </div>
+        </div>
+
+        <aside class="status-panel">
+          <div class="status-card">
+            <p class="eyebrow">Live board</p>
+            <div class="status-grid">
+              <div>
+                <span>Mode</span>
+                <strong id="mode-value">Rookie</strong>
+              </div>
+              <div>
+                <span>Timer</span>
+                <strong id="timer-value">00:00</strong>
+              </div>
+              <div>
+                <span>Filled</span>
+                <strong id="progress-value">0 / 81</strong>
+              </div>
+              <div>
+                <span>Lives</span>
+                <strong id="lives-value">3 / 3</strong>
+              </div>
+              <div>
+                <span>State</span>
+                <strong id="state-value">Generating</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="status-card status-card-help">
+            <p class="eyebrow">Board notes</p>
+            <ul class="status-list">
+              <li>Click a square or move with arrow keys.</li>
+              <li>Use `1-9` to fill. `Backspace` clears.</li>
+              <li>Wrong fills cost a life straight away.</li>
+              <li>Press `N` to toggle notes mode.</li>
+            </ul>
+          </div>
+        </aside>
+      </section>
+
+      <section class="playfield reveal">
+        <div class="board-panel">
+          <div class="board-toolbar">
+            <button id="new-game-button" class="action-button action-primary" type="button">New Puzzle</button>
+            <button id="notes-button" class="action-button" type="button" aria-pressed="false">Notes: Off</button>
+            <button id="erase-button" class="action-button" type="button">Erase</button>
+          </div>
+
+          <div class="board-shell">
+            <div id="board" class="board" role="grid" aria-label="Sudoku board"></div>
+          </div>
+
+          <div class="board-footer">
+            <p id="selection-value">Select a square to begin.</p>
+            <p id="message-value">Generating rookie puzzle...</p>
+          </div>
+        </div>
+
+        <aside class="control-panel">
+          <div class="control-card touch-only-panel">
+            <p class="eyebrow">Number pad</p>
+            <div id="number-pad" class="number-pad" aria-label="Number pad">
+              <button class="pad-button" type="button" data-value="1">1</button>
+              <button class="pad-button" type="button" data-value="2">2</button>
+              <button class="pad-button" type="button" data-value="3">3</button>
+              <button class="pad-button" type="button" data-value="4">4</button>
+              <button class="pad-button" type="button" data-value="5">5</button>
+              <button class="pad-button" type="button" data-value="6">6</button>
+              <button class="pad-button" type="button" data-value="7">7</button>
+              <button class="pad-button" type="button" data-value="8">8</button>
+              <button class="pad-button" type="button" data-value="9">9</button>
+              <button class="pad-button pad-button-wide" type="button" data-action="erase">Clear</button>
+            </div>
+          </div>
+
+          <div class="control-card control-card-help">
+            <p class="eyebrow">How it lands</p>
+            <h2>Three modes, one clean ruleset.</h2>
+            <p class="card-copy">
+              Rookie gives you a stable start, Cipher is the balanced middle mode, Impossible cuts the clue count hard, and every puzzle only gives you three mistakes.
+            </p>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <script src="fullscreen.js"></script>
+  <script src="sudoku.js"></script>
+</body>
+</html>

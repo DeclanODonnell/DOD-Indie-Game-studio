@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOD Web Arcade</title>
+  <meta
+    name="description"
+    content="Simple browser games by DOD."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="icon" type="image/png" href="dodwebarcadelogo.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="DOD Web Arcade home">
+        <span class="brand-mark">
+          <img class="brand-mark-image" src="dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+        </span>
+        <span class="brand-copy">
+          <strong>Web Arcade</strong>
+          <span>Simple browser games</span>
+        </span>
+      </a>
+    </header>
+
+    <main class="site-main">
+      <section class="intro reveal">
+        <h1>DOD Web Arcade</h1>
+        <p class="intro-copy">Simple browser games. Each game opens on its own page.</p>
+      </section>
+
+      <div id="game-list" class="game-list reveal" aria-live="polite"></div>
+    </main>
+
+    <footer class="site-footer reveal">
+      <span>More from DOD Web Studio
+    </span>
+      <a class="footer-link" href="https://dodwebstudio.com" target="_blank" rel="noreferrer">dodwebstudio.com</a>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

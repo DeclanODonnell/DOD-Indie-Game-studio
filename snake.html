@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake | DOD Web Arcade</title>
+  <meta
+    name="description"
+    content="Minimal black-and-yellow browser Snake by DOD."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="icon" type="image/png" href="dodwebarcadelogo.png">
+  <link rel="stylesheet" href="line-game.css">
+</head>
+<body>
+  <div class="page-shell" data-fullscreen-root>
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="Back to games">
+        <span class="brand-mark">
+          <img class="brand-mark-image" src="dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+        </span>
+        <span class="brand-copy">
+          <strong>Snake</strong>
+          <span>Back to games</span>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <button class="topbar-button topbar-button-ghost" data-fullscreen-button type="button">Fullscreen</button>
+        <button id="snake-restart-button" class="topbar-button" type="button">Start</button>
+      </div>
+    </header>
+
+    <main class="game-main">
+      <section class="game-head">
+        <h1>Snake</h1>
+        <p class="intro-copy">Eat, grow, and stay clear of walls and yourself. Use WASD, arrow keys, or swipe.</p>
+      </section>
+
+      <section class="meta-row" aria-label="Game status">
+        <div class="meta-item">
+          <span>Status</span>
+          <strong id="snake-status">Choose speed</strong>
+        </div>
+        <div class="meta-item">
+          <span>Score</span>
+          <strong id="snake-score">0</strong>
+        </div>
+        <div class="meta-item">
+          <span>Best</span>
+          <strong id="snake-best">0</strong>
+        </div>
+      </section>
+
+      <div class="difficulty-row" role="group" aria-label="Select speed">
+        <button type="button" class="difficulty-button" data-snake-speed="calm">Calm</button>
+        <button type="button" class="difficulty-button is-selected" data-snake-speed="standard">Standard</button>
+        <button type="button" class="difficulty-button" data-snake-speed="rush">Rush</button>
+      </div>
+
+      <div class="canvas-wrap canvas-wrap-square" id="snakeCanvasWrap" tabindex="-1">
+        <canvas id="snakeCanvas" aria-label="Snake"></canvas>
+
+        <div class="overlay-panel" id="snakeIntroPanel">
+          <div class="overlay-box">
+            <h2>Choose speed.</h2>
+          </div>
+        </div>
+
+        <div class="overlay-panel" id="snakeResultPanel" hidden>
+          <div class="overlay-box">
+            <p class="result-label" id="snake-result-eyebrow">Round complete</p>
+            <h2 id="snake-result-title">Game Over</h2>
+            <p class="result-copy" id="snake-result-copy">You clipped the wall.</p>
+            <div class="result-actions">
+              <button id="snake-play-again-button" class="topbar-button" type="button">Play Again</button>
+              <button id="snake-speed-button" class="topbar-button topbar-button-ghost" type="button">Speed</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="fullscreen.js"></script>
+  <script src="snake.js"></script>
+</body>
+</html>

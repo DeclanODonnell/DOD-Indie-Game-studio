@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pong | DOD Web Arcade</title>
+  <meta
+    name="description"
+    content="Minimal black-and-yellow browser Pong by DOD."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="icon" type="image/png" href="dodwebarcadelogo.png">
+  <link rel="stylesheet" href="line-game.css">
+</head>
+<body>
+  <div class="page-shell" data-fullscreen-root>
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="Back to games">
+        <span class="brand-mark">
+          <img class="brand-mark-image" src="dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+        </span>
+        <span class="brand-copy">
+          <strong>Pong</strong>
+          <span>Back to games</span>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <button class="topbar-button topbar-button-ghost" data-fullscreen-button type="button">Fullscreen</button>
+        <button id="pong-restart-button" class="topbar-button" type="button">Start</button>
+      </div>
+    </header>
+
+    <main class="game-main">
+      <section class="game-head">
+        <h1>Pong</h1>
+        <p class="intro-copy">Move your paddle with W/S, arrow keys, or drag. First to five wins.</p>
+      </section>
+
+      <section class="meta-row" aria-label="Game status">
+        <div class="meta-item">
+          <span>Status</span>
+          <strong id="pong-status">Choose difficulty</strong>
+        </div>
+        <div class="meta-item">
+          <span>Difficulty</span>
+          <strong id="pong-difficulty">Standard</strong>
+        </div>
+        <div class="meta-item">
+          <span>Score</span>
+          <strong id="pong-score">0 - 0</strong>
+        </div>
+      </section>
+
+      <div class="difficulty-row" role="group" aria-label="Select difficulty">
+        <button type="button" class="difficulty-button" data-pong-difficulty="rookie">Rookie</button>
+        <button type="button" class="difficulty-button is-selected" data-pong-difficulty="standard">Standard</button>
+        <button type="button" class="difficulty-button" data-pong-difficulty="expert">Expert</button>
+      </div>
+
+      <div class="canvas-wrap canvas-wrap-wide" id="pongCanvasWrap" tabindex="-1">
+        <canvas id="pongCanvas" aria-label="Pong"></canvas>
+
+        <div class="overlay-panel" id="pongIntroPanel">
+          <div class="overlay-box">
+            <h2>Choose difficulty.</h2>
+          </div>
+        </div>
+
+        <div class="overlay-panel" id="pongResultPanel" hidden>
+          <div class="overlay-box">
+            <p class="result-label" id="pong-result-eyebrow">Match complete</p>
+            <h2 id="pong-result-title">You Win</h2>
+            <p class="result-copy" id="pong-result-copy">You reached five first.</p>
+            <div class="result-actions">
+              <button id="pong-play-again-button" class="topbar-button" type="button">Play Again</button>
+              <button id="pong-difficulty-button" class="topbar-button topbar-button-ghost" type="button">Difficulty</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="fullscreen.js"></script>
+  <script src="pong.js"></script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+:root {
+  --bg: #030303;
+  --panel: rgba(10, 10, 10, 0.95);
+  --text: #f5eed7;
+  --muted: #a59c84;
+  --yellow: #ffd400;
+  --yellow-strong: #fff06d;
+  --line: rgba(255, 212, 0, 0.18);
+  --line-soft: rgba(255, 255, 255, 0.08);
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+  --radius-xl: 32px;
+  --radius-lg: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: "Chakra Petch", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 14% 10%, rgba(255, 212, 0, 0.14), transparent 18%),
+    linear-gradient(180deg, #020202 0%, #050505 42%, #0a0a0a 100%);
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+body::before {
+  background-image:
+    linear-gradient(rgba(255, 212, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 212, 0, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent 88%);
+}
+
+body::after {
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.02) 0,
+    rgba(255, 255, 255, 0.02) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  opacity: 0.34;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+p,
+h1,
+h2,
+strong {
+  margin: 0;
+}
+
+h1,
+h2,
+strong {
+  font-family: "Syne", sans-serif;
+}
+
+.page-shell {
+  width: min(980px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 34px 0 72px;
+}
+
+.site-header {
+  margin-bottom: 40px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(5, 5, 5, 0.82);
+  box-shadow: var(--shadow);
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #050505;
+  border: 1px solid var(--line);
+}
+
+.brand-mark-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-copy strong {
+  font-size: 0.96rem;
+}
+
+.brand-copy span,
+.intro-copy,
+.game-row p,
+.game-status {
+  color: var(--muted);
+}
+
+.brand-copy span {
+  font-size: 0.82rem;
+}
+
+.site-main {
+  display: grid;
+  gap: 32px;
+}
+
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 34px;
+  padding: 18px 4px 0;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.footer-link {
+  color: var(--yellow);
+  font-weight: 700;
+}
+
+.footer-link:hover,
+.footer-link:focus-visible {
+  color: var(--yellow-strong);
+}
+
+.intro {
+  display: grid;
+  gap: 14px;
+  padding: 10px 4px 4px;
+}
+
+h1 {
+  font-size: clamp(2.8rem, 8vw, 5rem);
+  line-height: 0.92;
+}
+
+.intro-copy,
+.game-row p {
+  max-width: 48ch;
+  line-height: 1.6;
+}
+
+.game-list {
+  display: grid;
+  gap: 18px;
+}
+
+.game-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgba(11, 11, 11, 0.94) 0%, rgba(6, 6, 6, 0.98) 100%);
+  box-shadow: var(--shadow);
+}
+
+.game-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.game-copy h2 {
+  font-size: 1.5rem;
+  line-height: 0.98;
+}
+
+.game-status {
+  font-size: 0.92rem;
+}
+
+.game-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  min-width: 92px;
+  padding: 10px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: #050505;
+  background: linear-gradient(135deg, var(--yellow) 0%, var(--yellow-strong) 100%);
+  font-weight: 700;
+  transition: transform 180ms ease;
+}
+
+.game-link:hover,
+.game-link:focus-visible {
+  transform: translateY(-2px);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 500ms ease, transform 500ms ease;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 720px) {
+  .page-shell {
+    width: min(calc(100% - 18px), 980px);
+    padding-top: 18px;
+  }
+
+  .game-row {
+    flex-direction: column;
+    align-items: start;
+    padding: 22px;
+  }
+
+  .site-footer {
+    flex-direction: column;
+    align-items: start;
+  }
+}
