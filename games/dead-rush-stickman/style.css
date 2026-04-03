@@ -22,6 +22,59 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #ffd400 #060606;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #ffd400 #060606;
+}
+
+*::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+*::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, rgba(4, 4, 4, 0.98) 0%, rgba(14, 14, 14, 0.98) 100%);
+  border: 1px solid rgba(255, 212, 0, 0.12);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 241, 118, 0.96) 0%, rgba(255, 212, 0, 0.92) 46%, rgba(205, 148, 0, 0.96) 100%);
+  border: 2px solid #060606;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(255, 212, 0, 0.16), inset 0 0 10px rgba(255, 255, 255, 0.18), 0 0 14px rgba(255, 212, 0, 0.2);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255, 245, 152, 0.98) 0%, rgba(255, 221, 72, 0.96) 46%, rgba(255, 182, 18, 0.98) 100%);
+}
+
+*::-webkit-scrollbar-corner {
+  background: #050505;
+}
+
+html,
+body,
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-corner {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 body {
@@ -91,6 +144,18 @@ canvas {
   font: inherit;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 h1,
 h2,
 h3,
@@ -107,9 +172,9 @@ strong {
 }
 
 .page-shell {
-  width: min(1500px, calc(100% - 18px));
+  width: min(1500px, calc(100% - 12px));
   margin: 0 auto;
-  padding: 12px 0 16px;
+  padding: 8px 0 10px;
 }
 
 .page-shell.is-fullscreen {
@@ -118,18 +183,18 @@ strong {
   min-height: 100dvh;
   height: 100dvh;
   margin: 0;
-  padding: 12px;
+  padding: 10px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 14px;
+  gap: 10px;
 }
 
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 6px;
 }
 
 .brand {
@@ -137,9 +202,9 @@ strong {
   align-items: center;
   gap: 14px;
   min-width: 0;
-  padding: 14px 18px;
+  padding: 10px 13px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 24px;
   background: rgba(9, 8, 7, 0.82);
   box-shadow: var(--shadow);
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
@@ -148,9 +213,9 @@ strong {
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   overflow: hidden;
   background: #050505;
   border: 1px solid var(--line);
@@ -171,7 +236,7 @@ strong {
 }
 
 .brand-copy strong {
-  font-size: 0.98rem;
+  font-size: 0.8rem;
 }
 
 .brand-copy span,
@@ -204,7 +269,7 @@ strong {
 
 .topbar-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .topbar-button,
@@ -221,8 +286,8 @@ strong {
 .topbar-button,
 .menu-button,
 .panel-button {
-  min-height: 46px;
-  padding: 10px 16px;
+  min-height: 38px;
+  padding: 7px 13px;
 }
 
 .topbar-button,
@@ -260,8 +325,9 @@ strong {
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 390px);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.36fr) minmax(250px, 292px);
+  gap: 10px;
+  align-items: stretch;
 }
 
 .arena-column,
@@ -271,19 +337,26 @@ strong {
 
 .arena-column {
   display: grid;
-  gap: 14px;
+  gap: 8px;
   min-width: 0;
+}
+
+.arena-head {
+  display: grid;
+  grid-template-columns: minmax(208px, 0.78fr) minmax(0, 1.22fr);
+  gap: 10px;
+  align-items: center;
 }
 
 .hero-copy {
   display: grid;
-  gap: 10px;
-  padding: 4px 4px 0;
+  gap: 2px;
+  padding: 0 2px;
 }
 
 h1 {
-  font-size: clamp(2.8rem, 5vw, 4.8rem);
-  line-height: 0.9;
+  font-size: clamp(1.42rem, 2.4vw, 2rem);
+  line-height: 0.96;
 }
 
 h2 {
@@ -293,14 +366,15 @@ h2 {
 
 .hero-copy p,
 .overlay-copy {
-  max-width: 62ch;
-  line-height: 1.5;
+  max-width: 44ch;
+  line-height: 1.28;
+  font-size: 0.78rem;
 }
 
 .hud-grid {
   display: grid;
-  grid-template-columns: repeat(9, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .hud-card,
@@ -313,23 +387,31 @@ h2 {
 
 .hud-card {
   display: grid;
-  gap: 6px;
-  min-height: 82px;
-  padding: 14px 14px 12px;
+  gap: 3px;
+  min-height: 50px;
+  padding: 8px 10px;
   border-radius: var(--radius-md);
 }
 
 .hud-card strong {
-  font-size: clamp(1rem, 1.4vw, 1.28rem);
+  font-size: clamp(0.88rem, 1.1vw, 1rem);
   line-height: 1;
+}
+
+.hud-card span {
+  font-size: 0.54rem;
 }
 
 .canvas-shell {
   position: relative;
+  width: min(100%, 980px);
+  justify-self: center;
+  aspect-ratio: 1280 / 760;
   min-height: 0;
-  height: min(100%, 100%);
+  height: auto;
+  max-height: min(55dvh, 620px);
   border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
+  border-radius: 24px;
   overflow: hidden;
   background: linear-gradient(180deg, #d6c9ae 0%, #c3b594 100%);
   box-shadow: var(--shadow);
@@ -348,12 +430,12 @@ h2 {
 }
 
 .page-shell.is-fullscreen .layout {
-  overflow: auto;
+  overflow: hidden;
 }
 
 .page-shell.is-fullscreen .canvas-shell {
-  height: 100%;
-  min-height: clamp(340px, 62dvh, 920px);
+  height: auto;
+  max-height: min(62dvh, 820px);
 }
 
 @media (min-width: 900px) {
@@ -364,14 +446,14 @@ h2 {
 
   .page-shell.is-fullscreen .arena-column {
     display: grid;
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
-    gap: 14px;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 10px;
   }
 
   .page-shell.is-fullscreen .sidebar {
     display: grid;
-    grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1fr);
-    gap: 14px;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 10px;
   }
 }
 
@@ -425,8 +507,8 @@ h2 {
 .overlay-card {
   width: min(100%, 460px);
   display: grid;
-  gap: 18px;
-  padding: 24px;
+  gap: 14px;
+  padding: 22px;
   border: 1px solid var(--line-strong);
   border-radius: 26px;
   background: linear-gradient(180deg, rgba(14, 12, 10, 0.96) 0%, rgba(9, 8, 6, 0.98) 100%);
@@ -544,33 +626,34 @@ h2 {
 .status-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 6px;
 }
 
 .status-chip {
   display: grid;
-  gap: 6px;
-  min-height: 72px;
-  padding: 14px 16px;
+  gap: 3px;
+  min-height: 48px;
+  padding: 8px 10px;
   border-radius: var(--radius-md);
 }
 
 .status-chip strong {
-  font-size: 1rem;
-  line-height: 1.28;
+  font-size: 0.88rem;
+  line-height: 1.18;
 }
 
 .sidebar {
   display: grid;
-  gap: 14px;
+  gap: 8px;
   min-width: 0;
+  align-content: stretch;
 }
 
 .panel {
   display: grid;
-  gap: 14px;
+  gap: 8px;
   min-height: 0;
-  padding: 16px;
+  padding: 10px;
   border-radius: var(--radius-lg);
 }
 
@@ -583,17 +666,21 @@ h2 {
   display: flex;
   align-items: start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
 
 .panel-head > div {
   display: grid;
-  gap: 6px;
+  gap: 3px;
 }
 
 .panel-head span {
-  font-size: 0.86rem;
+  font-size: 0.7rem;
   text-align: right;
+}
+
+.panel h2 {
+  font-size: clamp(0.98rem, 1.25vw, 1.24rem);
 }
 
 .weapon-slots,
@@ -601,22 +688,43 @@ h2 {
 .drop-list,
 .log-list {
   display: grid;
-  gap: 10px;
+  gap: 6px;
+}
+
+.weapon-slots {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .weapon-slot {
   display: grid;
-  gap: 6px;
-  padding: 14px 16px;
+  gap: 3px;
+  min-height: 58px;
+  padding: 8px 10px;
   text-align: left;
   color: var(--text);
   background: rgba(255, 255, 255, 0.03);
 }
 
+.weapon-slot-label {
+  color: var(--muted);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.weapon-slot strong,
+.upgrade-button strong,
+.drop-pill strong,
+.log-entry strong {
+  font-size: 0.98rem;
+  line-height: 1.1;
+}
+
 .weapon-slot small,
 .upgrade-button small {
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 0.8rem;
+  line-height: 1.28;
 }
 
 .weapon-slot.is-active {
@@ -640,8 +748,8 @@ h2 {
 
 .upgrade-button {
   display: grid;
-  gap: 6px;
-  padding: 14px 15px;
+  gap: 4px;
+  padding: 9px 11px;
   text-align: left;
   color: var(--text);
   background: rgba(255, 255, 255, 0.03);
@@ -655,16 +763,11 @@ h2 {
 .drop-pill,
 .log-entry {
   display: grid;
-  gap: 6px;
-  padding: 12px 14px;
+  gap: 4px;
+  padding: 10px 12px;
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.02);
-}
-
-.drop-pill strong,
-.log-entry strong {
-  font-size: 0.95rem;
 }
 
 .drop-pill.is-hot {
@@ -676,6 +779,7 @@ h2 {
   min-height: 0;
   overflow: auto;
   padding-right: 4px;
+  overscroll-behavior: contain;
 }
 
 .drop-list {
@@ -696,17 +800,19 @@ h2 {
     height: 100svh;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
-    gap: 14px;
+    gap: 8px;
   }
 
   .layout {
     min-height: 0;
-    grid-template-columns: minmax(0, 1.18fr) minmax(320px, 380px);
+    grid-template-columns: minmax(0, 1.36fr) minmax(250px, 292px);
+    overflow: hidden;
   }
 
   .arena-column {
     min-height: 0;
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
   }
 
   .canvas-shell,
@@ -715,17 +821,27 @@ h2 {
   }
 
   .sidebar {
-    grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  .panel-scroll {
+    min-height: 0;
   }
 }
 
 @media (max-width: 1180px) {
-  .hud-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 320px;
   }
 
-  .layout {
-    grid-template-columns: minmax(0, 1fr) 330px;
+  .arena-head {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .hud-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -746,15 +862,21 @@ h2 {
   }
 
   .status-strip {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .canvas-shell {
+    width: 100%;
     height: min(72svh, 620px);
+    aspect-ratio: auto;
   }
 
   .sidebar {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .weapon-slots {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .panel-scroll:last-child {
@@ -797,6 +919,10 @@ h2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .status-strip {
+    grid-template-columns: 1fr;
+  }
+
   .canvas-shell {
     height: min(66svh, 540px);
     border-radius: 24px;
@@ -827,6 +953,10 @@ h2 {
   }
 
   .sidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .weapon-slots {
     grid-template-columns: 1fr;
   }
 }

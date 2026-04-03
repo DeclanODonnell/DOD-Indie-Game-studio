@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animal Clicker | DOD Web Arcade</title>
+  <meta
+    name="description"
+    content="Animal Clicker is a staged arcade idle game where animals grow from Worker to God form across three evolution tiers."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Press+Start+2P&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="icon" type="image/png" href="../../dodwebarcadelogo.png">
+  <link rel="stylesheet" href="style.css?v=animal-rebuild-18">
+</head>
+<body class="is-selecting">
+  <div class="page-shell" id="gameRoot" data-fullscreen-root>
+    <section class="selection-overlay" id="selectionOverlay" aria-label="Character selection">
+      <div class="selection-panel panel">
+        <p class="eyebrow" id="selectionEyebrow">Stage 1 chamber</p>
+        <h1 id="selectionTitle">Choose Your Character</h1>
+        <p class="selection-copy" id="selectionCopy">
+          Pick one animal for the current stage. Each one must grow through Worker, Enforcer, Queen, Cyber, and God before the next stage opens.
+        </p>
+        <div class="selection-grid" id="selectionGrid"></div>
+      </div>
+    </section>
+
+    <header class="topbar">
+      <a class="brand" href="../../index.html" aria-label="Back to arcade">
+        <span class="brand-mark">
+          <img class="brand-logo" src="../../dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+        </span>
+        <span class="brand-copy">
+          <strong>Animal Clicker</strong>
+          <span>Back to arcade</span>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <button class="chrome-button" type="button" data-fullscreen-button>Fullscreen</button>
+        <button class="chrome-button" id="muteButton" type="button" aria-pressed="false">SFX ON</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="arena panel">
+        <div class="arena-head">
+          <div class="arena-copy">
+            <p class="eyebrow" id="formEyebrow">Stage 1 / Worker rank</p>
+            <h2 id="formTitle">Worker Ant</h2>
+          </div>
+          <div class="arena-side">
+            <div class="status-grid arena-status-grid" aria-label="Run status">
+              <div class="stat-card">
+                <span>Stage</span>
+                <strong id="stageValue">Stage 1</strong>
+              </div>
+              <div class="stat-card">
+                <span id="resourceLabelValue">Sugar Total</span>
+                <strong id="resourceTotalValue">0</strong>
+              </div>
+              <div class="stat-card">
+                <span>Helpers cps</span>
+                <strong id="resourcePerSecondValue">0 / sec</strong>
+              </div>
+            </div>
+
+            <div class="arena-metrics">
+              <div class="evolution-card" id="evolutionCard">
+                <p class="eyebrow">Evolution chamber</p>
+                <h3 id="progressTitle">Grow into Enforcer Ant</h3>
+                <div class="evolution-slot">
+                  <div class="progress-stack" id="progressStack">
+                    <div class="progress-meter" aria-hidden="true">
+                      <span class="progress-meter-fill" id="progressMeterFill"></span>
+                    </div>
+                    <p class="progress-meta" id="progressMeterLabel">0 / 700</p>
+                  </div>
+                  <div class="action-row" id="progressActionRow" hidden>
+                    <button class="action-button" id="primaryActionButton" type="button" hidden>Rank Up</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="creature-display" id="creatureDisplay">
+          <div class="display-grid" aria-hidden="true"></div>
+          <div class="helper-layer" id="helperLayer" aria-hidden="true"></div>
+          <div class="floating-layer" id="floatingLayer" aria-hidden="true"></div>
+
+          <div class="display-status">
+            <div class="display-chip" id="mainResourceChip">SUGAR</div>
+            <div class="display-chip" id="mainRankChip">WORKER</div>
+          </div>
+
+          <div class="main-creature-wrap" id="mainCreatureWrap" aria-hidden="true">
+            <div class="main-creature-mount" id="mainCreatureMount"></div>
+            <div class="name-chip" id="mainCreatureLabel">ANT</div>
+          </div>
+
+          <button
+            id="mainCreatureButton"
+            class="main-creature-button"
+            type="button"
+            aria-label="Collect resources"
+          ></button>
+        </div>
+      </section>
+
+      <aside class="shop panel">
+        <div class="shop-head">
+          <div>
+            <p class="eyebrow">Swarm control</p>
+            <h2>Shop</h2>
+          </div>
+          <div class="shop-meta-head">
+            <span id="shopStatusValue">Build helpers and upgrades</span>
+            <span id="nextTargetValue">Next: Enforcer</span>
+          </div>
+        </div>
+
+        <div class="shop-tabs" role="tablist" aria-label="Shop tabs">
+          <button class="tab-button is-active" id="helpersTabButton" type="button" data-tab="helpers" role="tab" aria-selected="true">Helpers</button>
+          <button class="tab-button" id="upgradesTabButton" type="button" data-tab="upgrades" role="tab" aria-selected="false">Upgrades</button>
+        </div>
+
+        <div class="shop-scroll">
+          <section class="shop-list" id="helpersList" role="tabpanel" aria-labelledby="helpersTabButton"></section>
+          <section class="shop-list" id="upgradesList" role="tabpanel" aria-labelledby="upgradesTabButton" hidden></section>
+        </div>
+      </aside>
+    </main>
+
+    <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+  </div>
+
+  <script src="../../fullscreen.js?v=animal-rebuild-15"></script>
+  <script src="script.js?v=animal-rebuild-15"></script>
+</body>
+</html>

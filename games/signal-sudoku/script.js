@@ -1,6 +1,7 @@
 const SIZE = 9;
 const BOX_SIZE = 3;
 const MAX_LIVES = 3;
+const WRONG_ENTRY_FEEDBACK_MS = 1100;
 
 const DIFFICULTIES = {
   rookie: {
@@ -29,10 +30,14 @@ const hasTouchUi =
 document.body.classList.toggle("has-touch-ui", hasTouchUi);
 
 const boardElement = document.querySelector("#board");
+const boardShell = document.querySelector("#board-shell");
+const failOverlay = document.querySelector("#fail-overlay");
 const modeButtons = Array.from(document.querySelectorAll(".mode-button"));
+const failModeButtons = Array.from(document.querySelectorAll(".fail-mode-button"));
 const newGameButton = document.querySelector("#new-game-button");
 const notesButton = document.querySelector("#notes-button");
 const eraseButton = document.querySelector("#erase-button");
+const retryButton = document.querySelector("#retry-button");
 const numberPad = document.querySelector("#number-pad");
 const modeValue = document.querySelector("#mode-value");
 const timerValue = document.querySelector("#timer-value");
@@ -41,6 +46,7 @@ const livesValue = document.querySelector("#lives-value");
 const stateValue = document.querySelector("#state-value");
 const selectionValue = document.querySelector("#selection-value");
 const messageValue = document.querySelector("#message-value");
+const failCopy = document.querySelector("#fail-copy");
 
 const cellRefs = [];
 
@@ -59,6 +65,9 @@ let checkedErrorTimerId = null;
 let timerId = null;
 let startTime = 0;
 let livesRemaining = MAX_LIVES;
+let displayedLivesRemaining = MAX_LIVES;
+const wrongEntryDisplays = new Map();
+const wrongEntryTimers = new Map();
 
 function createMatrix(factory) {
   return Array.from({ length: SIZE }, (_, row) =>
@@ -399,9 +408,18 @@ function describeSelection() {
 
 function updateStatus(conflicts) {
   const difficulty = DIFFICULTIES[currentModeKey];
+  const lostHeartIndex = livesRemaining < displayedLivesRemaining ? livesRemaining : -1;
   modeValue.textContent = difficulty.label;
   progressValue.textContent = `${countFilledCells(board)} / 81`;
-  livesValue.textContent = `${livesRemaining} / ${MAX_LIVES}`;
+  livesValue.innerHTML = Array.from({ length: MAX_LIVES }, (_, index) => `
+    <span class="heart-chip ${index < livesRemaining ? "is-alive" : "is-lost"} ${index === lostHeartIndex ? "is-pop" : ""}" aria-hidden="true">
+      <span class="heart-pixel"></span>
+    </span>
+  `).join("");
+  livesValue.setAttribute(
+    "aria-label",
+    `${livesRemaining} ${livesRemaining === 1 ? "heart" : "hearts"} remaining out of ${MAX_LIVES}`
+  );
 
   if (isGenerating) {
     stateValue.textContent = "Generating";
@@ -419,6 +437,7 @@ function updateStatus(conflicts) {
     stateValue.textContent = "Stable";
   }
 
+  displayedLivesRemaining = livesRemaining;
   describeSelection();
 }
 
@@ -441,6 +460,10 @@ function buildBoard() {
 
       const noteGrid = document.createElement("div");
       noteGrid.className = "cell-notes";
+
+      const wrongBadge = document.createElement("span");
+      wrongBadge.className = "cell-wrong-badge";
+      wrongBadge.textContent = "X";
       const noteRefs = [];
 
       for (let note = 1; note <= SIZE; note += 1) {
@@ -449,10 +472,10 @@ function buildBoard() {
         noteRefs.push(noteValue);
       }
 
-      cell.append(value, noteGrid);
+      cell.append(value, noteGrid, wrongBadge);
       cell.addEventListener("click", () => selectCell(row, col));
       fragment.appendChild(cell);
-      cellRefs[row][col] = { cell, value, noteRefs };
+      cellRefs[row][col] = { cell, value, noteRefs, wrongBadge };
     }
   }
 
@@ -465,6 +488,8 @@ function renderBoard(conflicts) {
       const value = board[row][col];
       const cellState = cellRefs[row][col];
       const cellKey = keyForCell(row, col);
+      const wrongEntry = wrongEntryDisplays.get(cellKey);
+      const displayValue = wrongEntry ? wrongEntry.value : value;
       const selected =
         selectedCell && row === selectedCell.row && col === selectedCell.col;
       const related =
@@ -476,16 +501,19 @@ function renderBoard(conflicts) {
           sameBox(row, col, selectedCell.row, selectedCell.col)
         );
 
-      cellState.value.textContent = value === 0 ? "" : String(value);
+      cellState.value.textContent = displayValue === 0 ? "" : String(displayValue);
       cellState.cell.classList.toggle("is-given", givens[row][col]);
       cellState.cell.classList.toggle("is-selected", Boolean(selected));
       cellState.cell.classList.toggle("is-related", Boolean(related));
       cellState.cell.classList.toggle("has-conflict", conflicts.has(cellKey));
       cellState.cell.classList.toggle("is-checked-error", checkedErrors.has(cellKey));
+      cellState.cell.classList.toggle("is-wrong-entry", Boolean(wrongEntry));
       cellState.cell.classList.toggle("is-complete", gameComplete);
-      cellState.cell.disabled = isGenerating || gameComplete || gameFailed;
+      cellState.value.classList.toggle("is-wrong-value", Boolean(wrongEntry));
+      cellState.wrongBadge.classList.toggle("is-visible", Boolean(wrongEntry));
+      cellState.cell.disabled = isGenerating || gameComplete || gameFailed || wrongEntryDisplays.size > 0;
 
-      if (value !== 0) {
+      if (displayValue !== 0) {
         cellState.noteRefs.forEach((noteRef) => {
           noteRef.textContent = "";
         });
@@ -495,10 +523,10 @@ function renderBoard(conflicts) {
         });
       }
 
-      const ariaValue = value === 0 ? "empty" : String(value);
+      const ariaValue = displayValue === 0 ? "empty" : String(displayValue);
       cellState.cell.setAttribute(
         "aria-label",
-        `Row ${row + 1} column ${col + 1}, ${givens[row][col] ? "given" : "editable"}, ${ariaValue}`
+        `Row ${row + 1} column ${col + 1}, ${givens[row][col] ? "given" : "editable"}, ${wrongEntry ? `wrong ${ariaValue}` : ariaValue}`
       );
     }
   }
@@ -508,6 +536,46 @@ function renderAll() {
   const conflicts = findConflicts(board);
   renderBoard(conflicts);
   updateStatus(conflicts);
+  updateFailOverlay();
+}
+
+function resizeBoardToShell() {
+  if (!boardShell || !boardElement) {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    const shellWidth = boardShell.clientWidth;
+    const shellHeight = boardShell.clientHeight;
+    const shellStyles = window.getComputedStyle(boardShell);
+    const horizontalPadding =
+      Number.parseFloat(shellStyles.paddingLeft || "0") +
+      Number.parseFloat(shellStyles.paddingRight || "0");
+    const verticalPadding =
+      Number.parseFloat(shellStyles.paddingTop || "0") +
+      Number.parseFloat(shellStyles.paddingBottom || "0");
+    const availableWidth = Math.max(0, shellWidth - horizontalPadding);
+    const availableHeight = Math.max(0, shellHeight - verticalPadding);
+
+    if (!availableWidth) {
+      return;
+    }
+
+    let size = availableWidth;
+    const desktopLayout = window.matchMedia("(min-width: 1081px)").matches;
+
+    if (desktopLayout && availableHeight) {
+      size = Math.min(availableWidth, availableHeight);
+    } else if (availableHeight) {
+      size = Math.min(
+        availableWidth,
+        Math.max(availableWidth * 0.72, Math.min(availableWidth, availableHeight))
+      );
+    }
+
+    const nextSize = Math.max(220, Math.floor(size - 2));
+    boardElement.style.setProperty("--board-size", `${nextSize}px`);
+  });
 }
 
 function findFirstEditableCell() {
@@ -523,12 +591,13 @@ function findFirstEditableCell() {
 }
 
 function selectCell(row, col) {
-  if (isGenerating || gameComplete || gameFailed) {
+  if (isGenerating || gameComplete || gameFailed || wrongEntryDisplays.size > 0) {
     return;
   }
 
   selectedCell = { row, col };
   renderAll();
+  resizeBoardToShell();
 }
 
 function clearCheckedErrors() {
@@ -552,12 +621,42 @@ function markCheckedError(cellKey, persist = false) {
     checkedErrors = new Set();
     checkedErrorTimerId = null;
     renderAll();
-  }, 650);
+  }, WRONG_ENTRY_FEEDBACK_MS);
+}
+
+function clearWrongEntries() {
+  wrongEntryTimers.forEach((timerIdValue) => {
+    window.clearTimeout(timerIdValue);
+  });
+
+  wrongEntryTimers.clear();
+  wrongEntryDisplays.clear();
+}
+
+function queueWrongEntry(row, col, attemptedValue, onComplete) {
+  const cellKey = keyForCell(row, col);
+
+  clearWrongEntries();
+  wrongEntryDisplays.set(cellKey, { value: attemptedValue });
+  renderAll();
+
+  const timeoutId = window.setTimeout(() => {
+    wrongEntryDisplays.delete(cellKey);
+    wrongEntryTimers.delete(cellKey);
+    renderAll();
+
+    if (typeof onComplete === "function") {
+      onComplete();
+    }
+  }, WRONG_ENTRY_FEEDBACK_MS);
+
+  wrongEntryTimers.set(cellKey, timeoutId);
 }
 
 function completeGame() {
   gameComplete = true;
   clearCheckedErrors();
+  clearWrongEntries();
   stopTimer();
   renderAll();
   selectionValue.textContent = "Grid cleared. Start a new puzzle whenever you want.";
@@ -566,19 +665,38 @@ function completeGame() {
 
 function failGame() {
   gameFailed = true;
+  clearWrongEntries();
   stopTimer();
   renderAll();
   selectionValue.textContent = "No lives left. Start a new puzzle to try again.";
   setMessage(`${DIFFICULTIES[currentModeKey].label} signal lost after ${timerValue.textContent}.`);
 }
 
+function updateFailOverlay() {
+  if (!boardShell || !failOverlay) {
+    return;
+  }
+
+  const shouldShow = gameFailed;
+  boardShell.classList.toggle("is-failed", shouldShow);
+  failOverlay.hidden = !shouldShow;
+  failOverlay.setAttribute("aria-hidden", String(!shouldShow));
+
+  if (failCopy) {
+    failCopy.textContent = `Three hearts gone on ${DIFFICULTIES[currentModeKey].label}. Try again or change the difficulty.`;
+  }
+
+  failModeButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.failMode === currentModeKey);
+  });
+}
+
 function handleNumberInput(value) {
-  if (!selectedCell || isGenerating || gameComplete || gameFailed) {
+  if (!selectedCell || isGenerating || gameComplete || gameFailed || wrongEntryDisplays.size > 0) {
     return;
   }
 
   const { row, col } = selectedCell;
-  const previousValue = board[row][col];
 
   if (givens[row][col]) {
     setMessage("That square is locked.");
@@ -600,15 +718,16 @@ function handleNumberInput(value) {
   }
 
   if (value !== solution[row][col]) {
-    board[row][col] = previousValue;
     notes[row][col].clear();
     livesRemaining = Math.max(0, livesRemaining - 1);
     markCheckedError(keyForCell(row, col), livesRemaining === 0);
-    renderAll();
+    queueWrongEntry(row, col, value, () => {
+      if (livesRemaining === 0) {
+        failGame();
+      }
+    });
 
-    if (livesRemaining === 0) {
-      failGame();
-    } else {
+    if (livesRemaining !== 0) {
       setMessage(`Wrong number. ${livesRemaining} ${livesRemaining === 1 ? "life" : "lives"} left.`);
     }
     return;
@@ -626,7 +745,7 @@ function handleNumberInput(value) {
 }
 
 function eraseSelectedCell() {
-  if (!selectedCell || isGenerating || gameComplete || gameFailed) {
+  if (!selectedCell || isGenerating || gameComplete || gameFailed || wrongEntryDisplays.size > 0) {
     return;
   }
 
@@ -641,11 +760,12 @@ function eraseSelectedCell() {
   board[row][col] = 0;
   notes[row][col].clear();
   renderAll();
+  resizeBoardToShell();
   setMessage(`Cleared row ${row + 1}, column ${col + 1}.`);
 }
 
 function moveSelection(rowDelta, colDelta) {
-  if (isGenerating || gameComplete || gameFailed) {
+  if (isGenerating || gameComplete || gameFailed || wrongEntryDisplays.size > 0) {
     return;
   }
 
@@ -677,12 +797,14 @@ function requestNewGame(modeKey = currentModeKey) {
   isGenerating = true;
   livesRemaining = MAX_LIVES;
   clearCheckedErrors();
+  clearWrongEntries();
 
   timerValue.textContent = "00:00";
   stateValue.textContent = "Generating";
   selectionValue.textContent = `${DIFFICULTIES[currentModeKey].label} grid loading...`;
   setMessage(`Generating ${DIFFICULTIES[currentModeKey].label.toLowerCase()} puzzle...`);
   renderAll();
+  resizeBoardToShell();
 
   window.setTimeout(() => {
     const puzzle = generatePuzzle(currentModeKey);
@@ -695,6 +817,7 @@ function requestNewGame(modeKey = currentModeKey) {
     isGenerating = false;
     startTimer();
     renderAll();
+    resizeBoardToShell();
     setMessage(`${DIFFICULTIES[currentModeKey].label} puzzle loaded.`);
   }, 30);
 }
@@ -758,6 +881,13 @@ function initActionButtons() {
     setNotesMode(!notesMode);
     renderAll();
   });
+  retryButton.addEventListener("click", () => requestNewGame(currentModeKey));
+
+  failModeButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      requestNewGame(button.dataset.failMode);
+    });
+  });
 
   numberPad.addEventListener("click", (event) => {
     const target = event.target.closest("button");
@@ -808,4 +938,5 @@ initModeSwitcher();
 initActionButtons();
 initRevealAnimations();
 document.addEventListener("keydown", handleKeydown);
+window.addEventListener("resize", resizeBoardToShell);
 requestNewGame(currentModeKey);

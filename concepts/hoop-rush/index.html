@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hoop Rush | DOD Web Arcade</title>
+  <meta
+    name="description"
+    content="An arcade basketball timing game built for DOD Web Arcade."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="icon" type="image/png" href="../../dodwebarcadelogo.png">
+  <link rel="stylesheet" href="../../games/arcade-mini-base.css?v=arcade-mini-1">
+  <link rel="stylesheet" href="style.css?v=hoop-4">
+</head>
+<body>
+  <div class="page-shell" data-fullscreen-root>
+    <header class="topbar">
+      <a class="brand" href="../../index.html" aria-label="Back to arcade">
+        <span class="brand-mark">
+          <img class="brand-mark-image" src="../../dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+        </span>
+        <span class="brand-copy">
+          <strong>Hoop Rush</strong>
+          <span>Back to arcade</span>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <button class="topbar-button topbar-button-ghost" data-fullscreen-button type="button">Fullscreen</button>
+        <button id="hoop-start-button" class="topbar-button" type="button">Start</button>
+      </div>
+    </header>
+
+    <main class="game-main">
+      <section class="game-head">
+        <h1>Hoop Rush</h1>
+        <p class="intro-copy">Lock the aim, lock the power, then watch the preset arc fly. Sweet timing lands clean swishes and bigger streaks.</p>
+      </section>
+
+      <section class="meta-row" aria-label="Game stats">
+        <div class="meta-item">
+          <span>Phase</span>
+          <strong id="hoop-phase">Idle</strong>
+        </div>
+        <div class="meta-item">
+          <span>Score</span>
+          <strong id="hoop-score">0</strong>
+        </div>
+        <div class="meta-item">
+          <span>Best Streak</span>
+          <strong id="hoop-best">0</strong>
+        </div>
+      </section>
+
+      <p id="hoop-status" class="sr-only" aria-live="polite">Hoop Rush ready.</p>
+
+      <section class="play-grid">
+        <section class="panel play-stage">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Shot Window</p>
+              <h2>Timing Court</h2>
+            </div>
+            <span class="panel-copy" id="hoop-streak-label">Streak 0 · 0 att</span>
+          </div>
+
+          <div class="stage-shell hoop-shell" id="hoop-stage-shell">
+            <div class="court-frame">
+              <div class="canvas-wrap">
+                <canvas id="hoop-canvas" aria-label="Hoop Rush court"></canvas>
+              </div>
+
+              <div class="shot-hud">
+                <div class="meter-card">
+                  <div class="meter-copy">
+                    <span>Aim</span>
+                    <strong id="hoop-aim-value">0%</strong>
+                  </div>
+                  <div class="meter-track" id="hoop-aim-track">
+                    <span class="meter-fill" id="hoop-aim-fill"></span>
+                    <span class="meter-marker" id="hoop-aim-marker"></span>
+                  </div>
+                </div>
+
+                <div class="meter-card">
+                  <div class="meter-copy">
+                    <span>Power</span>
+                    <strong id="hoop-power-value">0%</strong>
+                  </div>
+                  <div class="meter-track" id="hoop-power-track">
+                    <span class="meter-fill" id="hoop-power-fill"></span>
+                    <span class="meter-marker" id="hoop-power-marker"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="overlay-panel" id="hoop-intro-panel">
+              <div class="overlay-box">
+                <p class="result-label">Arcade Basketball</p>
+                <h2>Two clicks. Clean bucket.</h2>
+                <p class="result-copy">First click locks the aim meter. Second click locks power and launches the shot.</p>
+                <div class="menu-actions">
+                  <button id="hoop-intro-start" class="action-button action-button-primary" type="button">Start Run</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../fullscreen.js?v=hoop-4"></script>
+  <script src="script.js?v=hoop-4"></script>
+</body>
+</html>

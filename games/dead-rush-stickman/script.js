@@ -10,7 +10,6 @@ const DOM = {
   gameCanvas: document.querySelector("#gameCanvas"),
   healthValue: document.querySelector("#healthValue"),
   armorValue: document.querySelector("#armorValue"),
-  weaponValue: document.querySelector("#weaponValue"),
   ammoValue: document.querySelector("#ammoValue"),
   pointsValue: document.querySelector("#pointsValue"),
   waveValue: document.querySelector("#waveValue"),
@@ -112,16 +111,16 @@ const BOSS_TYPES = {
 };
 
 const MAIN_WAVES = [
-  { count: 8, interval: 1.15, reward: 120, weights: { normal: 1 } },
-  { count: 12, interval: 1.08, reward: 150, weights: { normal: 1, fast: 0.38 } },
-  { count: 15, interval: 1, reward: 180, weights: { normal: 1, fast: 0.5, tank: 0.2 } },
-  { count: 18, interval: 0.92, reward: 220, weights: { normal: 1, fast: 0.5, tank: 0.28, exploder: 0.14 }, bosses: ["brute"] },
-  { count: 22, interval: 0.86, reward: 260, weights: { normal: 1, fast: 0.62, tank: 0.3, exploder: 0.18, armored: 0.22 } },
-  { count: 24, interval: 0.82, reward: 310, weights: { normal: 1, fast: 0.72, tank: 0.34, exploder: 0.22, armored: 0.26, ranged: 0.2 } },
-  { count: 28, interval: 0.78, reward: 360, weights: { normal: 1, fast: 0.82, tank: 0.38, exploder: 0.26, armored: 0.34, ranged: 0.28 }, bosses: ["spitter"] },
-  { count: 31, interval: 0.74, reward: 420, weights: { normal: 0.8, fast: 0.94, tank: 0.4, exploder: 0.3, armored: 0.4, ranged: 0.36 }, bosses: ["brute"] },
-  { count: 34, interval: 0.7, reward: 500, weights: { normal: 0.7, fast: 0.98, tank: 0.44, exploder: 0.36, armored: 0.46, ranged: 0.42 }, bosses: ["spitter", "reaper"] },
-  { count: 38, interval: 0.64, reward: 600, weights: { normal: 0.6, fast: 1.05, tank: 0.52, exploder: 0.42, armored: 0.52, ranged: 0.48 }, bosses: ["brute", "reaper"] }
+  { count: 5, interval: 1.4, reward: 100, weights: { normal: 1 }, openingDelay: 1.2 },
+  { count: 7, interval: 1.28, reward: 130, weights: { normal: 1 }, openingDelay: 1.05 },
+  { count: 10, interval: 1.16, reward: 165, weights: { normal: 1, fast: 0.2 }, openingDelay: 0.95 },
+  { count: 13, interval: 1.06, reward: 205, weights: { normal: 1, fast: 0.32, tank: 0.1 }, openingDelay: 0.9 },
+  { count: 16, interval: 0.98, reward: 250, weights: { normal: 1, fast: 0.42, tank: 0.16, exploder: 0.08 }, openingDelay: 0.84 },
+  { count: 19, interval: 0.92, reward: 305, weights: { normal: 1, fast: 0.5, tank: 0.22, exploder: 0.12, armored: 0.14 }, bosses: ["brute"], openingDelay: 0.82, bossStart: 10 },
+  { count: 23, interval: 0.86, reward: 365, weights: { normal: 0.96, fast: 0.58, tank: 0.27, exploder: 0.16, armored: 0.2, ranged: 0.12 }, openingDelay: 0.78 },
+  { count: 27, interval: 0.8, reward: 430, weights: { normal: 0.9, fast: 0.68, tank: 0.32, exploder: 0.2, armored: 0.25, ranged: 0.18 }, bosses: ["spitter"], openingDelay: 0.74, bossStart: 9 },
+  { count: 31, interval: 0.74, reward: 510, weights: { normal: 0.82, fast: 0.78, tank: 0.36, exploder: 0.24, armored: 0.32, ranged: 0.24 }, bosses: ["brute"], openingDelay: 0.7, bossStart: 8.5 },
+  { count: 36, interval: 0.68, reward: 620, weights: { normal: 0.74, fast: 0.9, tank: 0.42, exploder: 0.3, armored: 0.38, ranged: 0.32 }, bosses: ["spitter", "reaper"], openingDelay: 0.68, bossStart: 8, bossGap: 7 }
 ];
 
 const UPGRADES = [
@@ -622,27 +621,26 @@ function renderWeaponSlots() {
       return;
     }
 
+    let slotLabel = "";
     let label = "";
-    let copy = "";
     if (slotKey === "fists") {
+      slotLabel = "Melee";
       label = WEAPONS.fists.label;
-      copy = WEAPONS.fists.slotText;
     } else {
+      slotLabel = slotKey === "primary" ? "Primary" : "Secondary";
       const weapon = state.inventory[slotKey];
       if (weapon) {
         label = WEAPONS[weapon.id].label;
-        copy = WEAPONS[weapon.id].slotText;
       } else {
-        label = slotKey === "primary" ? "Primary Empty" : "Secondary Empty";
-        copy = "Mystery Box can fill this slot.";
+        label = "Empty";
       }
     }
 
     button.classList.toggle("is-active", state.activeSlot === slotKey);
     button.disabled = slotKey !== "fists" && !state.inventory[slotKey];
     button.innerHTML = `
+      <span class="weapon-slot-label">${slotLabel}</span>
       <strong>${label}</strong>
-      <small>${copy}</small>
     `;
   });
 }
@@ -670,6 +668,10 @@ function renderUpgradeButtons() {
 }
 
 function renderLogs() {
+  if (!DOM.logList) {
+    return;
+  }
+
   DOM.logList.replaceChildren(
     ...state.logs.map((entry) => {
       const article = document.createElement("article");
@@ -692,6 +694,10 @@ function renderDropPills() {
   if (state.effects.swift > 0) pills.push({ label: "Sprint", copy: `${state.effects.swift.toFixed(1)}s` });
   if (state.drops.length > 0) pills.push({ label: "Pickups", copy: `${state.drops.length} on ground` });
   if (state.frenzy) pills.push({ label: "Frenzy", copy: "Campfire destroyed", hot: true });
+
+  if (!DOM.dropHintValue || !DOM.dropList) {
+    return;
+  }
 
   DOM.dropHintValue.textContent = pills.length === 0 ? "No active drops" : `${pills.length} active`;
   DOM.dropList.replaceChildren(
@@ -723,7 +729,6 @@ function refreshUI() {
 
   DOM.healthValue.textContent = `${Math.ceil(player.health)} / ${player.maxHealth}`;
   DOM.armorValue.textContent = `${Math.ceil(player.armor)} / ${player.maxArmor}`;
-  DOM.weaponValue.textContent = weaponLabel;
   DOM.ammoValue.textContent = ammoText;
   DOM.pointsValue.textContent = formatCompact(state.campPoints);
   DOM.waveValue.textContent = state.frenzy ? "Frenzy" : `${state.wave}`;
@@ -763,7 +768,7 @@ function refreshUI() {
   if (state.effects.swift > 0) activeEffects.push("Sprint");
   DOM.effectText.textContent = activeEffects.length ? activeEffects.join(" / ") : "None";
 
-  DOM.weaponHintValue.textContent = "1 fists, 2 primary, 3 secondary, Q cycle";
+  DOM.weaponHintValue.textContent = "1 / 2 / 3 / Q";
   DOM.campAccessValue.textContent = state.frenzy
     ? "Campfire lost"
     : getCampAccess()
@@ -952,7 +957,10 @@ function getWaveConfig(waveNumber) {
       interval: config.interval,
       reward: config.reward,
       weights: { ...config.weights },
-      bosses: [...(config.bosses || [])]
+      bosses: [...(config.bosses || [])],
+      openingDelay: config.openingDelay ?? 0.7,
+      bossStart: config.bossStart ?? 8,
+      bossGap: config.bossGap ?? 7
     };
   }
 
@@ -960,18 +968,21 @@ function getWaveConfig(waveNumber) {
   return {
     wave: waveNumber,
     label: `Overtime ${overtime}`,
-    count: 38 + overtime * 4,
-    interval: Math.max(0.4, 0.62 - overtime * 0.02),
-    reward: 620 + overtime * 65,
+    count: 34 + overtime * 3,
+    interval: Math.max(0.46, 0.72 - overtime * 0.02),
+    reward: 650 + overtime * 60,
     weights: {
-      normal: Math.max(0.3, 0.6 - overtime * 0.02),
-      fast: 1 + overtime * 0.03,
-      tank: 0.56 + overtime * 0.03,
-      exploder: 0.44 + overtime * 0.03,
-      armored: 0.54 + overtime * 0.04,
-      ranged: 0.5 + overtime * 0.04
+      normal: Math.max(0.34, 0.72 - overtime * 0.02),
+      fast: 0.92 + overtime * 0.035,
+      tank: 0.42 + overtime * 0.03,
+      exploder: 0.28 + overtime * 0.03,
+      armored: 0.34 + overtime * 0.04,
+      ranged: 0.3 + overtime * 0.04
     },
-    bosses: overtime % 2 === 0 ? ["reaper"] : [pick(["brute", "spitter"])]
+    bosses: overtime % 2 === 0 ? ["reaper"] : [pick(["brute", "spitter"])],
+    openingDelay: 0.64,
+    bossStart: 8,
+    bossGap: 7
   };
 }
 
@@ -991,8 +1002,8 @@ function startWave(fromBox = false) {
     interval: config.interval,
     reward: config.reward,
     weights: config.weights,
-    spawnTimer: 0.35,
-    bosses: config.bosses.map((id, index) => ({ id, time: 4 + index * 7 }))
+    spawnTimer: config.openingDelay,
+    bosses: config.bosses.map((id, index) => ({ id, time: config.bossStart + index * config.bossGap }))
   };
   state.boxUsesThisStop = 0;
   state.boxResult = fromBox ? "Crate disaster. The round started instantly." : `Round ${config.wave} live.`;
@@ -2154,8 +2165,193 @@ function drawCampfire() {
   CTX.restore();
 }
 
+function drawWeaponModel(weaponId, options = {}) {
+  const {
+    radius = 16,
+    player = false,
+    accent = "#d74a4a",
+    fallbackLength = 24
+  } = options;
+
+  const grip = player ? "#55674c" : "#3b342d";
+  const metal = player ? "#d9d0b0" : "#8e8579";
+  const darkMetal = player ? "#2e3538" : "#2a2725";
+  const wood = player ? "#8e5e2b" : "#5c4030";
+  const tube = player ? "#4d5c4a" : "#3d3a33";
+  const glow = player ? accent : "#d4c8b3";
+  const scale = radius / 16;
+
+  CTX.save();
+  CTX.translate(radius * 0.12, 0);
+
+  switch (weaponId) {
+    case "fists":
+      CTX.fillStyle = glow;
+      CTX.fillRect(radius * 0.02, -7 * scale, 9 * scale, 14 * scale);
+      CTX.fillRect(radius * 0.44, -6 * scale, 9 * scale, 12 * scale);
+      break;
+    case "knife":
+      CTX.fillStyle = grip;
+      CTX.fillRect(radius * 0.02, -3 * scale, 8 * scale, 6 * scale);
+      CTX.fillStyle = metal;
+      CTX.beginPath();
+      CTX.moveTo(radius * 0.5, 0);
+      CTX.lineTo(radius * 1.52, -4.5 * scale);
+      CTX.lineTo(radius * 1.52, 4.5 * scale);
+      CTX.closePath();
+      CTX.fill();
+      break;
+    case "bat":
+      CTX.fillStyle = wood;
+      CTX.fillRect(radius * 0.02, -3 * scale, radius * 1.48, 6 * scale);
+      CTX.fillRect(radius * 1.18, -5.5 * scale, radius * 0.56, 11 * scale);
+      CTX.fillStyle = "#d7bf84";
+      CTX.fillRect(radius * 0.18, -3 * scale, 4 * scale, 6 * scale);
+      break;
+    case "pistol":
+      CTX.fillStyle = darkMetal;
+      CTX.fillRect(radius * 0.06, -4 * scale, radius * 0.98, 8 * scale);
+      CTX.fillStyle = metal;
+      CTX.fillRect(radius * 0.24, -5.2 * scale, radius * 0.64, 3 * scale);
+      CTX.fillStyle = grip;
+      CTX.fillRect(radius * 0.22, 1 * scale, 7 * scale, 10 * scale);
+      break;
+    case "revolver":
+      CTX.fillStyle = darkMetal;
+      CTX.fillRect(radius * 0.06, -4 * scale, radius * 1.12, 8 * scale);
+      CTX.fillStyle = metal;
+      CTX.beginPath();
+      CTX.arc(radius * 0.62, 0, 4.4 * scale, 0, TAU);
+      CTX.fill();
+      CTX.fillStyle = grip;
+      CTX.fillRect(radius * 0.2, 1 * scale, 8 * scale, 11 * scale);
+      break;
+    case "smg":
+      CTX.fillStyle = darkMetal;
+      CTX.fillRect(-2 * scale, -4.2 * scale, radius * 1.42, 8.4 * scale);
+      CTX.fillStyle = grip;
+      CTX.fillRect(radius * 0.12, 1.4 * scale, 7 * scale, 11 * scale);
+      CTX.fillStyle = metal;
+      CTX.fillRect(radius * 0.76, 1.5 * scale, 5 * scale, 10 * scale);
+      CTX.fillStyle = tube;
+      CTX.fillRect(-6 * scale, -2.8 * scale, 8 * scale, 5.6 * scale);
+      break;
+    case "assault":
+      CTX.fillStyle = darkMetal;
+      CTX.fillRect(-4 * scale, -4.2 * scale, radius * 1.9, 8.4 * scale);
+      CTX.fillStyle = tube;
+      CTX.fillRect(-10 * scale, -2.6 * scale, 10 * scale, 5.2 * scale);
+      CTX.fillRect(radius * 1.7, -1.4 * scale, radius * 0.42, 2.8 * scale);
+      CTX.fillStyle = metal;
+      CTX.fillRect(radius * 0.72, 1.5 * scale, 6 * scale, 12 * scale);
+      CTX.fillStyle = grip;
+      CTX.fillRect(radius * 0.18, 1 * scale, 7 * scale, 11 * scale);
+      break;
+    case "shotgun":
+      CTX.fillStyle = wood;
+      CTX.fillRect(-10 * scale, -3.5 * scale, radius * 1.92, 7 * scale);
+      CTX.fillStyle = darkMetal;
+      CTX.fillRect(radius * 1.22, -2.3 * scale, radius * 0.78, 4.6 * scale);
+      CTX.fillStyle = metal;
+      CTX.fillRect(radius * 0.44, -1.8 * scale, radius * 0.56, 3.6 * scale);
+      CTX.fillStyle = grip;
+      CTX.fillRect(radius * 0.04, 1 * scale, 7 * scale, 10 * scale);
+      break;
+    case "sniper":
+      CTX.fillStyle = darkMetal;
+      CTX.fillRect(-10 * scale, -3.4 * scale, radius * 2.34, 6.8 * scale);
+      CTX.fillStyle = metal;
+      CTX.fillRect(radius * 0.34, -7 * scale, radius * 0.74, 3.2 * scale);
+      CTX.fillStyle = grip;
+      CTX.fillRect(radius * 0.1, 1 * scale, 7 * scale, 11 * scale);
+      CTX.fillStyle = tube;
+      CTX.fillRect(radius * 2.02, -1.2 * scale, radius * 0.36, 2.4 * scale);
+      break;
+    case "lmg":
+      CTX.fillStyle = darkMetal;
+      CTX.fillRect(-8 * scale, -4.4 * scale, radius * 2.14, 8.8 * scale);
+      CTX.fillStyle = tube;
+      CTX.fillRect(-14 * scale, -2.8 * scale, 10 * scale, 5.6 * scale);
+      CTX.fillStyle = metal;
+      CTX.fillRect(radius * 0.62, 1 * scale, 8 * scale, 13 * scale);
+      CTX.fillRect(radius * 0.88, 6 * scale, radius * 0.42, 5 * scale);
+      CTX.fillStyle = grip;
+      CTX.fillRect(radius * 0.08, 1 * scale, 7 * scale, 11 * scale);
+      break;
+    case "minigun":
+      CTX.fillStyle = darkMetal;
+      CTX.fillRect(-10 * scale, -5 * scale, radius * 1.22, 10 * scale);
+      CTX.fillStyle = tube;
+      for (let index = 0; index < 4; index += 1) {
+        CTX.fillRect(radius * 0.62 + index * 8 * scale, -5.2 * scale + index * 2.8 * scale, radius * 0.74, 2 * scale);
+      }
+      CTX.fillStyle = grip;
+      CTX.fillRect(radius * 0.04, 1 * scale, 7 * scale, 12 * scale);
+      CTX.fillStyle = metal;
+      CTX.fillRect(-2 * scale, 4 * scale, 8 * scale, 6 * scale);
+      break;
+    case "rocket":
+      CTX.fillStyle = darkMetal;
+      CTX.fillRect(-6 * scale, -4 * scale, radius * 1.86, 8 * scale);
+      CTX.fillStyle = "#ff8b5d";
+      CTX.beginPath();
+      CTX.moveTo(radius * 1.82, -4.5 * scale);
+      CTX.lineTo(radius * 2.24, 0);
+      CTX.lineTo(radius * 1.82, 4.5 * scale);
+      CTX.closePath();
+      CTX.fill();
+      CTX.fillStyle = grip;
+      CTX.fillRect(radius * 0.06, 2 * scale, 8 * scale, 9 * scale);
+      break;
+    case "flamethrower":
+      CTX.fillStyle = tube;
+      CTX.fillRect(-6 * scale, -3.8 * scale, radius * 1.44, 7.6 * scale);
+      CTX.fillStyle = "#ff8b4d";
+      CTX.fillRect(radius * 1.26, -2.2 * scale, radius * 0.44, 4.4 * scale);
+      CTX.fillStyle = grip;
+      CTX.fillRect(radius * 0.12, 1 * scale, 7 * scale, 11 * scale);
+      CTX.fillStyle = "#a64b34";
+      CTX.fillRect(radius * 0.42, 6 * scale, radius * 0.68, 7 * scale);
+      break;
+    case "crossbow":
+      CTX.fillStyle = wood;
+      CTX.fillRect(-6 * scale, -2.5 * scale, radius * 1.52, 5 * scale);
+      CTX.strokeStyle = metal;
+      CTX.lineWidth = 2.6 * scale;
+      CTX.beginPath();
+      CTX.moveTo(radius * 1.18, -10 * scale);
+      CTX.lineTo(radius * 0.86, 0);
+      CTX.lineTo(radius * 1.18, 10 * scale);
+      CTX.stroke();
+      CTX.strokeStyle = "#d7bf84";
+      CTX.lineWidth = 1.4 * scale;
+      CTX.beginPath();
+      CTX.moveTo(radius * 0.88, -8 * scale);
+      CTX.lineTo(radius * 0.88, 8 * scale);
+      CTX.stroke();
+      break;
+    default:
+      CTX.fillStyle = player ? "#465e49" : "#2d2a28";
+      CTX.fillRect(radius * 0.1, -4, fallbackLength, 8);
+      CTX.fillStyle = accent;
+      CTX.fillRect(radius * 0.1 + fallbackLength - 4, -2, 6, 4);
+      break;
+  }
+
+  CTX.restore();
+}
+
 function drawStickman(x, y, angle, options = {}) {
-  const { radius = 16, bodyColor = "#111111", accent = "#d74a4a", boss = false, player = false, hitFlash = 0, weaponLength = 24 } = options;
+  const {
+    radius = 16,
+    bodyColor = "#111111",
+    accent = "#d74a4a",
+    boss = false,
+    player = false,
+    hitFlash = 0,
+    weaponLength = 24,
+    weaponId = "fists"
+  } = options;
 
   CTX.save();
   CTX.translate(x, y);
@@ -2200,10 +2396,12 @@ function drawStickman(x, y, angle, options = {}) {
   }
 
   CTX.rotate(angle);
-  CTX.fillStyle = player ? "#465e49" : "#2d2a28";
-  CTX.fillRect(radius * 0.1, -4, weaponLength, 8);
-  CTX.fillStyle = accent;
-  CTX.fillRect(radius * 0.1 + weaponLength - 4, -2, 6, 4);
+  drawWeaponModel(weaponId, {
+    radius,
+    player,
+    accent,
+    fallbackLength: weaponLength
+  });
   CTX.restore();
 }
 
@@ -2220,7 +2418,18 @@ function drawEnemies() {
       accent: enemy.accent,
       boss: enemy.isBoss,
       hitFlash: enemy.hitFlash,
-      weaponLength: enemy.type === "ranged" || enemy.isBoss ? 18 : 10
+      weaponLength: enemy.type === "ranged" || enemy.isBoss ? 18 : 10,
+      weaponId: enemy.isBoss
+        ? enemy.type === "reaper"
+          ? "minigun"
+          : enemy.type === "spitter"
+            ? "assault"
+            : "shotgun"
+        : enemy.type === "ranged"
+          ? "crossbow"
+          : enemy.type === "armored"
+            ? "bat"
+            : "fists"
     });
 
     if (enemy.isBoss) {
@@ -2245,7 +2454,8 @@ function drawPlayer() {
     accent: "#f7d878",
     player: true,
     hitFlash: player.hitFlash,
-    weaponLength: getWeaponDefinition()?.kind === "gun" ? 28 : 14
+    weaponLength: getWeaponDefinition()?.kind === "gun" ? 28 : 14,
+    weaponId: state.activeSlot === "fists" ? "fists" : (state.inventory[state.activeSlot]?.id || "fists")
   });
 }
 

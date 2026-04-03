@@ -14,15 +14,15 @@
     href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
     rel="stylesheet"
   >
-  <link rel="icon" type="image/png" href="dodwebarcadelogo.png">
-  <link rel="stylesheet" href="line-game.css">
+  <link rel="icon" type="image/png" href="../../dodwebarcadelogo.png">
+  <link rel="stylesheet" href="style.css?v=line-fix-13">
 </head>
 <body>
   <div class="page-shell" data-fullscreen-root>
     <header class="topbar">
-      <a class="brand" href="index.html" aria-label="Back to arcade">
+      <a class="brand" href="../../index.html" aria-label="Back to arcade">
         <span class="brand-mark">
-          <img class="brand-mark-image" src="dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+          <img class="brand-mark-image" src="../../dodwebarcadelogo.png" alt="DOD Web Arcade logo">
         </span>
         <span class="brand-copy">
           <strong>Neon Trails</strong>
@@ -42,11 +42,15 @@
         <p class="intro-copy">Yellow is you. Blue is CPU. Use WASD, arrow keys, or swipe.</p>
       </section>
 
-      <section class="meta-row" aria-label="Game status">
-        <div class="meta-item">
-          <span>Status</span>
-          <strong id="line-status">Select difficulty</strong>
-        </div>
+      <p id="line-status" class="sr-only" aria-live="polite">Select difficulty</p>
+
+      <div class="difficulty-row" role="group" aria-label="Select difficulty">
+        <button type="button" class="difficulty-button" data-line-difficulty="rookie">Rookie</button>
+        <button type="button" class="difficulty-button is-selected" data-line-difficulty="standard">Standard</button>
+        <button type="button" class="difficulty-button" data-line-difficulty="expert">Expert</button>
+      </div>
+
+      <section class="meta-row" aria-label="Game stats">
         <div class="meta-item">
           <span>Difficulty</span>
           <strong id="line-difficulty">Standard</strong>
@@ -57,18 +61,19 @@
         </div>
       </section>
 
-      <div class="difficulty-row" role="group" aria-label="Select difficulty">
-        <button type="button" class="difficulty-button" data-line-difficulty="rookie">Rookie</button>
-        <button type="button" class="difficulty-button is-selected" data-line-difficulty="standard">Standard</button>
-        <button type="button" class="difficulty-button" data-line-difficulty="expert">Expert</button>
-      </div>
-
       <div class="canvas-wrap canvas-wrap-tall" id="lineCanvasWrap" tabindex="-1">
         <canvas id="lineCanvas" aria-label="Neon Trails"></canvas>
 
         <div class="overlay-panel" id="lineIntroPanel">
           <div class="overlay-box">
             <h2>Choose difficulty.</h2>
+          </div>
+        </div>
+
+        <div class="overlay-panel overlay-panel-countdown" id="lineCountdownPanel" hidden>
+          <div class="countdown-box">
+            <p class="result-label">Round starts in</p>
+            <strong id="lineCountdownValue" class="countdown-value" data-text="3">3</strong>
           </div>
         </div>
 
@@ -87,7 +92,7 @@
     </main>
   </div>
 
-  <script src="fullscreen.js"></script>
-  <script src="line-game.js"></script>
+  <script src="../../fullscreen.js?v=line-fix-11"></script>
+  <script src="script.js?v=line-fix-11"></script>
 </body>
 </html>

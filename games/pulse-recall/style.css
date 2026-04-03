@@ -1,0 +1,133 @@
+@import url("../arcade-mini-base.css?v=arcade-mini-1");
+
+.play-grid {
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.play-stage {
+  min-height: min(64vh, 620px);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.stage-shell {
+  min-height: 0;
+  align-self: stretch;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.memory-grid {
+  width: min(calc(100% - 8px), calc(100svh - 360px), 620px);
+  height: min(calc(100% - 8px), calc(100svh - 360px), 620px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.memory-grid.is-locked {
+  pointer-events: none;
+}
+
+.memory-pad {
+  position: relative;
+  border: 1px solid rgba(255, 212, 0, 0.16);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 50% 26%, rgba(255, 212, 0, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(22, 22, 16, 0.98) 0%, rgba(11, 11, 8, 0.98) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    inset 0 -30px 50px rgba(0, 0, 0, 0.26),
+    0 0 0 1px rgba(255, 212, 0, 0.04);
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.memory-pad::before,
+.memory-pad::after {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: 18px;
+  pointer-events: none;
+}
+
+.memory-pad::before {
+  border: 1px solid rgba(255, 212, 0, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 34%),
+    radial-gradient(circle at 50% 32%, rgba(255, 240, 109, 0.1), transparent 44%);
+}
+
+.memory-pad::after {
+  inset: auto 24% 22% 24%;
+  height: 12%;
+  border-radius: 999px;
+  background: rgba(255, 212, 0, 0.12);
+  box-shadow: 0 0 18px rgba(255, 212, 0, 0.14);
+}
+
+.memory-pad:hover,
+.memory-pad:focus-visible {
+  outline: none;
+  transform: translateY(-2px);
+  border-color: rgba(255, 212, 0, 0.3);
+  box-shadow: 0 0 0 1px rgba(255, 212, 0, 0.12), 0 20px 40px rgba(0, 0, 0, 0.26);
+}
+
+.memory-pad.is-active {
+  border-color: rgba(255, 240, 109, 0.8);
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 240, 109, 0.6), transparent 42%),
+    linear-gradient(180deg, rgba(48, 42, 10, 0.96) 0%, rgba(17, 16, 6, 0.98) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 212, 0, 0.26),
+    0 0 34px rgba(255, 212, 0, 0.32),
+    inset 0 0 34px rgba(255, 240, 109, 0.22);
+}
+
+.memory-pad.is-player {
+  border-color: rgba(118, 255, 122, 0.72);
+  background:
+    radial-gradient(circle at 50% 30%, rgba(118, 255, 122, 0.44), transparent 40%),
+    linear-gradient(180deg, rgba(14, 40, 16, 0.98) 0%, rgba(8, 18, 10, 0.98) 100%);
+  box-shadow:
+    0 0 0 1px rgba(118, 255, 122, 0.22),
+    0 0 28px rgba(118, 255, 122, 0.24),
+    inset 0 0 28px rgba(118, 255, 122, 0.12);
+}
+
+.memory-pad.is-error {
+  border-color: rgba(255, 92, 92, 0.66);
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 92, 92, 0.34), transparent 36%),
+    linear-gradient(180deg, rgba(42, 12, 12, 0.98) 0%, rgba(18, 7, 7, 0.98) 100%);
+  box-shadow: 0 0 0 1px rgba(255, 92, 92, 0.2), 0 0 28px rgba(255, 92, 92, 0.18);
+}
+
+.overlay-panel {
+  background: rgba(5, 5, 5, 0.34);
+}
+
+.overlay-box {
+  width: min(100%, 420px);
+}
+
+@media (max-width: 760px) {
+  .memory-grid {
+    width: min(calc(100% - 6px), calc(100svh - 300px), 520px);
+    height: min(calc(100% - 6px), calc(100svh - 300px), 520px);
+    gap: 12px;
+  }
+
+  .stage-shell {
+    padding: 14px;
+  }
+
+  .play-stage {
+    min-height: min(56vh, 500px);
+  }
+}

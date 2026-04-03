@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reaction Lab | DOD Web Arcade</title>
+  <meta
+    name="description"
+    content="A reaction-time arcade mini-game built for DOD Web Arcade."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="icon" type="image/png" href="../../dodwebarcadelogo.png">
+  <link rel="stylesheet" href="../arcade-mini-base.css?v=arcade-mini-1">
+  <link rel="stylesheet" href="style.css?v=reaction-5">
+</head>
+<body>
+  <div class="page-shell" data-fullscreen-root>
+    <header class="topbar">
+      <a class="brand" href="../../index.html" aria-label="Back to arcade">
+        <span class="brand-mark">
+          <img class="brand-mark-image" src="../../dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+        </span>
+        <span class="brand-copy">
+          <strong>Reaction Lab</strong>
+          <span>Back to arcade</span>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <button class="topbar-button topbar-button-ghost" data-fullscreen-button type="button">Fullscreen</button>
+        <button id="reaction-start-button" class="topbar-button" type="button">Start</button>
+      </div>
+    </header>
+
+    <main class="game-main">
+      <section class="game-head">
+        <h1>Reaction Lab</h1>
+        <p class="intro-copy">Wait through the dead air, then snap the moment the chamber flips live. Click early and the run is burned.</p>
+      </section>
+
+      <p id="reaction-status" class="sr-only" aria-live="polite">Reaction Lab ready.</p>
+
+      <section class="play-grid">
+        <section class="panel play-stage">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Timing Chamber</p>
+              <h2>Reaction Test</h2>
+            </div>
+            <span class="panel-copy" id="reaction-attempt-label">Attempt 0</span>
+          </div>
+
+          <div class="stage-shell">
+            <div class="reaction-hud" aria-label="Reaction stats">
+              <div class="reaction-chip">
+                <span>Best</span>
+                <strong id="reaction-best">--</strong>
+              </div>
+              <div class="reaction-chip">
+                <span>Attempts</span>
+                <strong id="reaction-attempts">0</strong>
+              </div>
+            </div>
+
+            <button id="reaction-target" class="reaction-target is-idle" type="button" aria-label="Reaction target">
+              <span class="reaction-core"></span>
+              <span class="reaction-title" id="reaction-title">Stand by.</span>
+              <span class="reaction-copy" id="reaction-copy">Press start, wait for the live signal, then hit the chamber.</span>
+            </button>
+
+            <div class="overlay-panel" id="reaction-intro-panel">
+              <div class="overlay-box">
+                <p class="result-label">Reaction Drill</p>
+                <h2>Wait for green.</h2>
+                <p class="result-copy">Start the run, hold steady through the delay, then click the instant the chamber lights up.</p>
+                <div class="menu-actions">
+                  <button id="reaction-intro-start" class="action-button action-button-primary" type="button">Start Test</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="overlay-panel" id="reaction-result-panel" hidden>
+              <div class="overlay-box">
+                <p class="result-label">Result</p>
+                <h2 id="reaction-result-title">Locked in.</h2>
+                <p class="result-copy" id="reaction-result-copy">You hit 000 ms.</p>
+                <div class="result-actions">
+                  <button id="reaction-play-again" class="action-button action-button-primary" type="button">Run Again</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../fullscreen.js?v=reaction-5"></script>
+  <script src="script.js?v=reaction-5"></script>
+</body>
+</html>

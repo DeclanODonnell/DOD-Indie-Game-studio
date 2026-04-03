@@ -14,15 +14,15 @@
     href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
     rel="stylesheet"
   >
-  <link rel="icon" type="image/png" href="dodwebarcadelogo.png">
-  <link rel="stylesheet" href="line-game.css">
+  <link rel="icon" type="image/png" href="../../dodwebarcadelogo.png">
+  <link rel="stylesheet" href="style.css?v=snake-fix-5">
 </head>
 <body>
   <div class="page-shell" data-fullscreen-root>
     <header class="topbar">
-      <a class="brand" href="index.html" aria-label="Back to arcade">
+      <a class="brand" href="../../index.html" aria-label="Back to arcade">
         <span class="brand-mark">
-          <img class="brand-mark-image" src="dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+          <img class="brand-mark-image" src="../../dodwebarcadelogo.png" alt="DOD Web Arcade logo">
         </span>
         <span class="brand-copy">
           <strong>Snake</strong>
@@ -42,11 +42,15 @@
         <p class="intro-copy">Eat, grow, and stay clear of walls and yourself. Use WASD, arrow keys, or swipe.</p>
       </section>
 
-      <section class="meta-row" aria-label="Game status">
-        <div class="meta-item">
-          <span>Status</span>
-          <strong id="snake-status">Choose speed</strong>
-        </div>
+      <p id="snake-status" class="sr-only" aria-live="polite">Choose speed</p>
+
+      <div class="difficulty-row" role="group" aria-label="Select speed">
+        <button type="button" class="difficulty-button" data-snake-speed="calm">Calm</button>
+        <button type="button" class="difficulty-button is-selected" data-snake-speed="standard">Standard</button>
+        <button type="button" class="difficulty-button" data-snake-speed="rush">Rush</button>
+      </div>
+
+      <section class="meta-row" aria-label="Game stats">
         <div class="meta-item">
           <span>Score</span>
           <strong id="snake-score">0</strong>
@@ -56,12 +60,6 @@
           <strong id="snake-best">0</strong>
         </div>
       </section>
-
-      <div class="difficulty-row" role="group" aria-label="Select speed">
-        <button type="button" class="difficulty-button" data-snake-speed="calm">Calm</button>
-        <button type="button" class="difficulty-button is-selected" data-snake-speed="standard">Standard</button>
-        <button type="button" class="difficulty-button" data-snake-speed="rush">Rush</button>
-      </div>
 
       <div class="canvas-wrap canvas-wrap-square" id="snakeCanvasWrap" tabindex="-1">
         <canvas id="snakeCanvas" aria-label="Snake"></canvas>
@@ -87,7 +85,7 @@
     </main>
   </div>
 
-  <script src="fullscreen.js"></script>
-  <script src="snake.js"></script>
+  <script src="../../fullscreen.js?v=snake-fix-3"></script>
+  <script src="script.js?v=snake-fix-3"></script>
 </body>
 </html>

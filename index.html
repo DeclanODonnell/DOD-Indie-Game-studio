@@ -15,9 +15,55 @@
     rel="stylesheet"
   >
   <link rel="icon" type="image/png" href="dodwebarcadelogo.png">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=arcade-home-9">
 </head>
 <body>
+  <div class="arcade-intro" id="arcadeIntro" hidden aria-hidden="true">
+    <div class="intro-room" aria-hidden="true">
+      <div class="intro-fog intro-fog-a"></div>
+      <div class="intro-fog intro-fog-b"></div>
+
+      <div class="intro-camera">
+        <div class="arcade-machine" id="arcadeMachine">
+          <div class="arcade-machine-shadow"></div>
+
+          <div class="arcade-cabinet">
+            <div class="arcade-marquee"></div>
+
+            <div class="arcade-screen-shell">
+              <div class="arcade-screen-frame">
+                <div class="arcade-screen-surface" id="introScreenTarget">
+                  <div class="arcade-screen-bloom"></div>
+                  <div class="arcade-screen-scanlines"></div>
+                  <img class="arcade-screen-logo" src="dodwebarcadelogo.png" alt="" aria-hidden="true">
+                </div>
+              </div>
+            </div>
+
+            <div class="arcade-control-deck">
+              <div class="arcade-stick arcade-stick-left"></div>
+              <div class="arcade-stick arcade-stick-right"></div>
+
+              <div class="arcade-buttons arcade-buttons-left">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+
+              <div class="arcade-buttons arcade-buttons-right">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+
+            <div class="arcade-base"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="page-shell">
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="DOD Web Arcade home">
@@ -26,26 +72,30 @@
         </span>
         <span class="brand-copy">
           <strong>DOD Web Arcade</strong>
-          <span>Minimal browser games</span>
+          <span>Play Fast. Play Anything.</span>
         </span>
       </a>
+
     </header>
 
     <main class="site-main">
       <section class="intro reveal">
-        <h1>DOD Web Arcade</h1>
-        <p class="intro-copy">Minimal browser games with simple controls, clean pages, and separate routes for each cabinet.</p>
+        <h1 class="glitch-text" data-text="DOD Web Arcade">DOD Web Arcade</h1>
+        <p class="intro-copy">Jump straight into a growing collection of browser games built for quick fun, smooth gameplay, and zero downloads.</p>
       </section>
 
       <div id="game-list" class="game-list reveal" aria-live="polite"></div>
     </main>
 
     <footer class="site-footer reveal">
-      <span>More from DOD Web Studio</span>
-      <a class="footer-link" href="https://dodwebstudio.com" target="_blank" rel="noopener noreferrer" aria-label="Open dodwebstudio.com in a new tab">dodwebstudio.com</a>
+      <a class="footer-button" href="credits/index.html?v=credits-16">Credits</a>
+      <p class="footer-copy">
+        <span>Website and games built by</span>
+        <a class="footer-link" href="https://dodwebstudio.com" target="_blank" rel="noopener noreferrer" aria-label="Open dodwebstudio.com in a new tab">DOD Web Studio</a>
+      </p>
     </footer>
   </div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=arcade-home-9"></script>
 </body>
 </html>

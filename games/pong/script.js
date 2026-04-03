@@ -5,6 +5,8 @@ const pongDifficulty = document.querySelector("#pong-difficulty");
 const pongScore = document.querySelector("#pong-score");
 const pongRestartButton = document.querySelector("#pong-restart-button");
 const pongIntroPanel = document.querySelector("#pongIntroPanel");
+const pongCountdownPanel = document.querySelector("#pongCountdownPanel");
+const pongCountdownValue = document.querySelector("#pongCountdownValue");
 const pongResultPanel = document.querySelector("#pongResultPanel");
 const pongResultTitle = document.querySelector("#pong-result-title");
 const pongResultCopy = document.querySelector("#pong-result-copy");
@@ -15,24 +17,36 @@ const pongDifficultyOptions = Array.from(document.querySelectorAll("[data-pong-d
 const pongPresets = {
   rookie: {
     label: "Rookie",
-    cpuSpeed: 360,
-    paddleSpeed: 520,
-    ballSpeed: 360,
-    paddleHeight: 118
+    cpuSpeed: 300,
+    paddleSpeed: 540,
+    ballSpeed: 330,
+    paddleHeight: 124,
+    reactionDelay: 240,
+    prediction: 0.18,
+    aimError: 120,
+    deadZone: 18
   },
   standard: {
     label: "Standard",
     cpuSpeed: 470,
     paddleSpeed: 580,
     ballSpeed: 410,
-    paddleHeight: 106
+    paddleHeight: 106,
+    reactionDelay: 110,
+    prediction: 0.58,
+    aimError: 42,
+    deadZone: 10
   },
   expert: {
     label: "Expert",
-    cpuSpeed: 620,
+    cpuSpeed: 720,
     paddleSpeed: 620,
-    ballSpeed: 460,
-    paddleHeight: 96
+    ballSpeed: 500,
+    paddleHeight: 92,
+    reactionDelay: 36,
+    prediction: 0.96,
+    aimError: 8,
+    deadZone: 4
   }
 };
 
@@ -52,10 +66,13 @@ const pongState = {
   boardScale: 1,
   playerY: 0,
   cpuY: 0,
+  cpuTargetY: 0,
+  cpuDecisionAt: 0,
   playerMove: 0,
   serveDelayUntil: 0,
   animationFrame: null,
   resultTimeout: null,
+  countdownTimer: null,
   lastFrameAt: 0,
   context: pongCanvas ? pongCanvas.getContext("2d") : null,
   ball: {
@@ -119,6 +136,11 @@ function clearPongTimers() {
     window.clearTimeout(pongState.resultTimeout);
     pongState.resultTimeout = null;
   }
+
+  if (pongState.countdownTimer) {
+    window.clearTimeout(pongState.countdownTimer);
+    pongState.countdownTimer = null;
+  }
 }
 
 function stopPongAnimation() {
@@ -138,6 +160,7 @@ function hidePongPanel(panel) {
 
 function showPongIntroPanel() {
   pongState.mode = "menu";
+  hidePongPanel(pongCountdownPanel);
   hidePongPanel(pongResultPanel);
   showPongPanel(pongIntroPanel);
   setPongStatus("Choose difficulty");
@@ -147,6 +170,7 @@ function showPongIntroPanel() {
 
 function showPongResultPanel(result) {
   pongState.mode = "result";
+  hidePongPanel(pongCountdownPanel);
   hidePongPanel(pongIntroPanel);
   showPongPanel(pongResultPanel);
 
@@ -211,6 +235,8 @@ function centerPongBall(direction = 1) {
 function resetPongRound(direction = Math.random() > 0.5 ? 1 : -1) {
   pongState.playerY = clampPongPaddle((pongState.height - pongState.paddleHeight) / 2);
   pongState.cpuY = clampPongPaddle((pongState.height - pongState.paddleHeight) / 2);
+  pongState.cpuTargetY = pongState.cpuY;
+  pongState.cpuDecisionAt = 0;
   centerPongBall(direction);
   pongState.serveDelayUntil = performance.now() + 650;
 }
@@ -229,6 +255,7 @@ function beginPongMatch(key = pongState.difficultyKey, resetScore = false) {
   clearPongTimers();
   stopPongAnimation();
   hidePongPanel(pongIntroPanel);
+  hidePongPanel(pongCountdownPanel);
   hidePongPanel(pongResultPanel);
   measurePongBoard();
 
@@ -241,20 +268,54 @@ function beginPongMatch(key = pongState.difficultyKey, resetScore = false) {
   pongState.playerMove = 0;
   pongState.lastFrameAt = 0;
   resetPongRound();
-  setPongStatus("Serve");
   updatePongHud();
   renderPongGame();
-  pongState.animationFrame = requestAnimationFrame(animatePongGame);
 
   if (pongCanvasWrap) {
     pongCanvasWrap.focus({ preventScroll: true });
   }
+
+  startPongCountdown();
+}
+
+function startPongCountdown(step = 3) {
+  pongState.mode = "countdown";
+
+  if (!pongCountdownPanel || !pongCountdownValue) {
+    pongState.mode = "playing";
+    setPongStatus("Live");
+    updatePongHud();
+    renderPongGame();
+    pongState.animationFrame = requestAnimationFrame(animatePongGame);
+    return;
+  }
+
+  pongCountdownValue.textContent = String(step);
+  pongCountdownValue.dataset.text = String(step);
+  setPongStatus(`Starting in ${step}`);
+  showPongPanel(pongCountdownPanel);
+
+  pongState.countdownTimer = window.setTimeout(() => {
+    if (step > 1) {
+      startPongCountdown(step - 1);
+      return;
+    }
+
+    hidePongPanel(pongCountdownPanel);
+    pongState.countdownTimer = null;
+    pongState.mode = "playing";
+    setPongStatus("Live");
+    updatePongHud();
+    renderPongGame();
+    pongState.animationFrame = requestAnimationFrame(animatePongGame);
+  }, 760);
 }
 
 function finishPongMatch(result) {
   clearPongTimers();
   stopPongAnimation();
   pongState.mode = "settling";
+  hidePongPanel(pongCountdownPanel);
   setPongStatus(result === "player" ? "You win" : "You lose");
   updatePongHud();
   renderPongGame();
@@ -283,8 +344,8 @@ function scorePongPoint(result) {
     return;
   }
 
-  setPongStatus("Serve");
   resetPongRound(result === "player" ? -1 : 1);
+  startPongCountdown();
 }
 
 function updatePongPlayer(deltaSeconds) {
@@ -293,12 +354,60 @@ function updatePongPlayer(deltaSeconds) {
   pongState.playerY = clampPongPaddle(nextY);
 }
 
+function predictPongBounceY(startY, velocityY, travelSeconds) {
+  if (travelSeconds <= 0) {
+    return startY;
+  }
+
+  let projectedY = startY + velocityY * travelSeconds;
+  const minY = pongState.ball.size;
+  const maxY = pongState.height - pongState.ball.size;
+  const span = maxY - minY;
+
+  if (span <= 0) {
+    return startY;
+  }
+
+  while (projectedY < minY || projectedY > maxY) {
+    if (projectedY < minY) {
+      projectedY = minY + (minY - projectedY);
+    } else if (projectedY > maxY) {
+      projectedY = maxY - (projectedY - maxY);
+    }
+  }
+
+  return projectedY;
+}
+
 function updatePongCpu(deltaSeconds) {
   const preset = pongPresets[pongState.difficultyKey];
+  const now = performance.now();
   const paddleCenter = pongState.cpuY + pongState.paddleHeight / 2;
-  const targetY = pongState.ball.vx > 0 ? pongState.ball.y : pongState.height / 2;
-  const delta = targetY - paddleCenter;
+  const cpuFrontX = pongState.width - pongState.sideInset - pongState.paddleWidth;
+
+  if (now >= pongState.cpuDecisionAt) {
+    let targetCenter = pongState.height / 2;
+
+    if (pongState.ball.vx > 0) {
+      const distanceToCpu = Math.max(0, cpuFrontX - pongState.ball.x);
+      const travelSeconds = distanceToCpu / Math.max(1, pongState.ball.vx);
+      const predictedY = predictPongBounceY(pongState.ball.y, pongState.ball.vy, travelSeconds);
+      const blendedY = pongState.ball.y + (predictedY - pongState.ball.y) * preset.prediction;
+      const error = (Math.random() * 2 - 1) * preset.aimError;
+      targetCenter = blendedY + error;
+    }
+
+    pongState.cpuTargetY = clampPongPaddle(targetCenter - pongState.paddleHeight / 2);
+    pongState.cpuDecisionAt = now + preset.reactionDelay;
+  }
+
+  const targetCenter = pongState.cpuTargetY + pongState.paddleHeight / 2;
+  const delta = targetCenter - paddleCenter;
   const maxMove = preset.cpuSpeed * deltaSeconds;
+
+  if (Math.abs(delta) <= preset.deadZone) {
+    return;
+  }
 
   if (Math.abs(delta) <= maxMove) {
     pongState.cpuY = clampPongPaddle(pongState.cpuY + delta);
@@ -308,15 +417,54 @@ function updatePongCpu(deltaSeconds) {
   pongState.cpuY = clampPongPaddle(pongState.cpuY + Math.sign(delta) * maxMove);
 }
 
-function bounceOffPaddle(isPlayer) {
+function bounceOffPaddle(isPlayer, contactY = pongState.ball.y) {
   const paddleY = isPlayer ? pongState.playerY : pongState.cpuY;
   const paddleCenter = paddleY + pongState.paddleHeight / 2;
-  const offset = (pongState.ball.y - paddleCenter) / (pongState.paddleHeight / 2);
+  const offset = Math.max(-1, Math.min(1, (contactY - paddleCenter) / (pongState.paddleHeight / 2)));
   const speed = Math.min(860, Math.hypot(pongState.ball.vx, pongState.ball.vy) * 1.04);
 
   pongState.ball.speed = speed;
   pongState.ball.vx = (isPlayer ? 1 : -1) * speed;
   pongState.ball.vy = speed * 0.72 * offset;
+}
+
+function resolvePongPaddleCollision(previousX, previousY) {
+  const playerX = pongState.sideInset;
+  const cpuX = pongState.width - pongState.sideInset - pongState.paddleWidth;
+  const previousLeft = previousX - pongState.ball.size;
+  const currentLeft = pongState.ball.x - pongState.ball.size;
+  const previousRight = previousX + pongState.ball.size;
+  const currentRight = pongState.ball.x + pongState.ball.size;
+
+  if (pongState.ball.vx < 0 && previousLeft >= playerX + pongState.paddleWidth && currentLeft <= playerX + pongState.paddleWidth) {
+    const travel = currentLeft - previousLeft;
+    const ratio = travel === 0 ? 1 : (playerX + pongState.paddleWidth - previousLeft) / travel;
+    const impactY = previousY + (pongState.ball.y - previousY) * ratio;
+    const overlapsPaddle = impactY + pongState.ball.size >= pongState.playerY && impactY - pongState.ball.size <= pongState.playerY + pongState.paddleHeight;
+
+    if (overlapsPaddle) {
+      pongState.ball.x = playerX + pongState.paddleWidth + pongState.ball.size;
+      pongState.ball.y = impactY;
+      bounceOffPaddle(true, impactY);
+      return true;
+    }
+  }
+
+  if (pongState.ball.vx > 0 && previousRight <= cpuX && currentRight >= cpuX) {
+    const travel = currentRight - previousRight;
+    const ratio = travel === 0 ? 1 : (cpuX - previousRight) / travel;
+    const impactY = previousY + (pongState.ball.y - previousY) * ratio;
+    const overlapsPaddle = impactY + pongState.ball.size >= pongState.cpuY && impactY - pongState.ball.size <= pongState.cpuY + pongState.paddleHeight;
+
+    if (overlapsPaddle) {
+      pongState.ball.x = cpuX - pongState.ball.size;
+      pongState.ball.y = impactY;
+      bounceOffPaddle(false, impactY);
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function updatePongBall(deltaSeconds) {
@@ -326,6 +474,8 @@ function updatePongBall(deltaSeconds) {
 
   setPongStatus("Live");
 
+  const previousX = pongState.ball.x;
+  const previousY = pongState.ball.y;
   pongState.ball.x += pongState.ball.vx * deltaSeconds;
   pongState.ball.y += pongState.ball.vy * deltaSeconds;
 
@@ -339,34 +489,7 @@ function updatePongBall(deltaSeconds) {
     pongState.ball.vy *= -1;
   }
 
-  const playerX = pongState.sideInset;
-  const cpuX = pongState.width - pongState.sideInset - pongState.paddleWidth;
-
-  const touchesPlayer = (
-    pongState.ball.vx < 0 &&
-    pongState.ball.x - pongState.ball.size <= playerX + pongState.paddleWidth &&
-    pongState.ball.x - pongState.ball.size >= playerX &&
-    pongState.ball.y >= pongState.playerY &&
-    pongState.ball.y <= pongState.playerY + pongState.paddleHeight
-  );
-
-  const touchesCpu = (
-    pongState.ball.vx > 0 &&
-    pongState.ball.x + pongState.ball.size >= cpuX &&
-    pongState.ball.x + pongState.ball.size <= cpuX + pongState.paddleWidth &&
-    pongState.ball.y >= pongState.cpuY &&
-    pongState.ball.y <= pongState.cpuY + pongState.paddleHeight
-  );
-
-  if (touchesPlayer) {
-    pongState.ball.x = playerX + pongState.paddleWidth + pongState.ball.size;
-    bounceOffPaddle(true);
-  }
-
-  if (touchesCpu) {
-    pongState.ball.x = cpuX - pongState.ball.size;
-    bounceOffPaddle(false);
-  }
+  resolvePongPaddleCollision(previousX, previousY);
 
   if (pongState.ball.x + pongState.ball.size < 0) {
     scorePongPoint("cpu");

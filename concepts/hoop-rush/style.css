@@ -1,0 +1,123 @@
+@import url("../../games/arcade-mini-base.css?v=arcade-mini-1");
+
+.play-grid,
+.play-stage {
+  min-height: 0;
+}
+
+.play-grid {
+  grid-template-columns: 1fr;
+}
+
+.hoop-shell {
+  padding: 10px;
+}
+
+.court-frame {
+  position: relative;
+  width: min(100%, 980px);
+  height: clamp(420px, 66vh, 720px);
+  aspect-ratio: 1 / 0.98;
+  margin: 0 auto;
+}
+
+.canvas-wrap {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 1px solid rgba(255, 212, 0, 0.12);
+  border-radius: 24px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255, 212, 0, 0.08), transparent 26%),
+    rgba(10, 10, 10, 0.68);
+  box-shadow: inset 0 0 0 1px rgba(255, 212, 0, 0.04);
+}
+
+.shot-hud {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: min(calc(100% - 20px), 420px);
+  transform: translateX(-50%);
+}
+
+.meter-card {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 212, 0, 0.16);
+  border-radius: 16px;
+  background: rgba(6, 6, 6, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.meter-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.meter-copy span {
+  color: var(--muted);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.meter-copy strong {
+  font-size: 0.82rem;
+}
+
+.meter-track {
+  position: relative;
+  height: 12px;
+  border: 1px solid rgba(255, 212, 0, 0.14);
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.meter-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--fill, 0%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(255, 212, 0, 0.3) 0%, rgba(255, 240, 109, 0.82) 100%);
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.08);
+}
+
+.meter-marker {
+  position: absolute;
+  top: -2px;
+  left: var(--marker, 50%);
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(5, 5, 5, 0.9);
+  background: var(--yellow-strong);
+  box-shadow: 0 0 14px rgba(255, 212, 0, 0.24);
+}
+
+@media (max-width: 760px) {
+  .hoop-shell {
+    padding: 8px;
+  }
+
+  .court-frame {
+    width: 100%;
+    height: clamp(360px, 58vh, 560px);
+    aspect-ratio: auto;
+  }
+
+  .shot-hud {
+    bottom: 10px;
+    width: min(calc(100% - 16px), 100%);
+  }
+}

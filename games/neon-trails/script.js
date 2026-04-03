@@ -11,6 +11,8 @@ const lineResultTitle = document.querySelector("#line-result-title");
 const lineResultCopy = document.querySelector("#line-result-copy");
 const linePlayAgainButton = document.querySelector("#line-play-again-button");
 const lineDifficultyButton = document.querySelector("#line-difficulty-button");
+const lineCountdownPanel = document.querySelector("#lineCountdownPanel");
+const lineCountdownValue = document.querySelector("#lineCountdownValue");
 const lineDifficultyOptions = Array.from(document.querySelectorAll("[data-line-difficulty]"));
 
 const directionMap = {
@@ -23,42 +25,48 @@ const directionMap = {
 const presets = {
   rookie: {
     label: "Rookie",
-    tickInterval: 116,
-    botRandomness: 0.34,
-    openWeight: 5.2,
-    areaWeight: 0.014,
+    tickInterval: 96,
+    botRandomness: 0.24,
+    openWeight: 5.6,
+    areaWeight: 0.02,
+    playerAreaWeight: 0.01,
+    territorySwingWeight: 0.018,
     wallWeight: 1.05,
     pursuitWeight: 0.03,
-    stabilityBonus: 0.8,
-    deadEndPenalty: 4,
-    headOnPenalty: 8,
-    lookAheadDepth: 0
+    stabilityBonus: 0.9,
+    deadEndPenalty: 7,
+    headOnPenalty: 16,
+    lookAheadDepth: 1
   },
   standard: {
     label: "Standard",
-    tickInterval: 94,
-    botRandomness: 0.12,
-    openWeight: 6.1,
-    areaWeight: 0.028,
-    wallWeight: 1.35,
-    pursuitWeight: 0.07,
+    tickInterval: 76,
+    botRandomness: 0.09,
+    openWeight: 6.5,
+    areaWeight: 0.03,
+    playerAreaWeight: 0.018,
+    territorySwingWeight: 0.026,
+    wallWeight: 1.4,
+    pursuitWeight: 0.09,
     stabilityBonus: 1.2,
-    deadEndPenalty: 8,
-    headOnPenalty: 18,
-    lookAheadDepth: 1
+    deadEndPenalty: 10,
+    headOnPenalty: 24,
+    lookAheadDepth: 2
   },
   expert: {
     label: "Expert",
-    tickInterval: 78,
-    botRandomness: 0.02,
-    openWeight: 7.1,
-    areaWeight: 0.04,
-    wallWeight: 1.6,
-    pursuitWeight: 0.12,
-    stabilityBonus: 1.6,
-    deadEndPenalty: 12,
-    headOnPenalty: 28,
-    lookAheadDepth: 2
+    tickInterval: 60,
+    botRandomness: 0.015,
+    openWeight: 7.4,
+    areaWeight: 0.045,
+    playerAreaWeight: 0.032,
+    territorySwingWeight: 0.052,
+    wallWeight: 1.7,
+    pursuitWeight: 0.14,
+    stabilityBonus: 1.7,
+    deadEndPenalty: 15,
+    headOnPenalty: 36,
+    lookAheadDepth: 3
   }
 };
 
@@ -74,6 +82,7 @@ const state = {
   lastStepAt: 0,
   animationFrame: null,
   resultTimeout: null,
+  countdownTimer: null,
   swipeStart: null,
   context: lineCanvas ? lineCanvas.getContext("2d") : null
 };
@@ -146,6 +155,11 @@ function clearTimers() {
     window.clearTimeout(state.resultTimeout);
     state.resultTimeout = null;
   }
+
+  if (state.countdownTimer) {
+    window.clearTimeout(state.countdownTimer);
+    state.countdownTimer = null;
+  }
 }
 
 function stopAnimation() {
@@ -165,6 +179,7 @@ function hidePanel(panel) {
 
 function showIntroPanel() {
   state.mode = "menu";
+  hidePanel(lineCountdownPanel);
   hidePanel(lineResultPanel);
   showPanel(lineIntroPanel);
   setStatus("Select difficulty");
@@ -174,6 +189,7 @@ function showIntroPanel() {
 
 function showResultPanel(result) {
   state.mode = "result";
+  hidePanel(lineCountdownPanel);
   hidePanel(lineIntroPanel);
   showPanel(lineResultPanel);
 
@@ -207,9 +223,17 @@ function measureBoard() {
   lineCanvas.style.height = `${rect.height}px`;
   state.context.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  const cell = Math.max(window.innerWidth < 640 ? 10 : 12, Math.floor(Math.min(rect.width / 34, rect.height / 44)));
-  const cols = Math.max(24, Math.floor(rect.width / cell));
-  const rows = Math.max(28, Math.floor(rect.height / cell));
+  const isCompactScreen = window.innerWidth < 640;
+  const insetX = Math.max(isCompactScreen ? 6 : 8, Math.floor(rect.width * 0.008));
+  const insetY = Math.max(isCompactScreen ? 4 : 6, Math.floor(rect.height * 0.01));
+  const usableWidth = Math.max(160, rect.width - insetX * 2);
+  const usableHeight = Math.max(160, rect.height - insetY * 2);
+  const cell = Math.max(
+    isCompactScreen ? 12 : 16,
+    Math.floor(Math.min(usableWidth / (isCompactScreen ? 24 : 32), usableHeight / (isCompactScreen ? 32 : 28)))
+  );
+  const cols = Math.max(isCompactScreen ? 22 : 28, Math.floor(usableWidth / cell));
+  const rows = Math.max(isCompactScreen ? 26 : 24, Math.floor(usableHeight / cell));
 
   state.board = {
     width: rect.width,
@@ -267,8 +291,8 @@ function resetBoard(resetScore = false) {
     cellKey(state.bot.x, state.bot.y)
   ]);
   state.lastStepAt = 0;
-  state.mode = "playing";
-  setStatus("Grid live");
+  state.mode = "countdown";
+  setStatus("Get ready");
   updateHud();
 }
 
@@ -336,6 +360,71 @@ function measureReachableArea(start, blockedSet) {
   }
 
   return visited.size;
+}
+
+function buildDistanceMap(start, blockedSet) {
+  const distances = new Map();
+
+  if (isBlocked(start, blockedSet)) {
+    return distances;
+  }
+
+  const queue = [{ x: start.x, y: start.y, distance: 0 }];
+  let head = 0;
+
+  while (head < queue.length) {
+    const current = queue[head++];
+    const key = cellKey(current.x, current.y);
+
+    if (distances.has(key) || blockedSet.has(key)) {
+      continue;
+    }
+
+    distances.set(key, current.distance);
+
+    [directionMap.up, directionMap.right, directionMap.down, directionMap.left].forEach((direction) => {
+      const next = {
+        x: current.x + direction.x,
+        y: current.y + direction.y
+      };
+
+      if (!isBlocked(next, blockedSet) && !distances.has(cellKey(next.x, next.y))) {
+        queue.push({ x: next.x, y: next.y, distance: current.distance + 1 });
+      }
+    });
+  }
+
+  return distances;
+}
+
+function measureTerritoryControl(botStart, playerStart, blockedSet) {
+  const botDistances = buildDistanceMap(botStart, blockedSet);
+  const playerDistances = buildDistanceMap(playerStart, blockedSet);
+  const allKeys = new Set([...botDistances.keys(), ...playerDistances.keys()]);
+  const territory = { bot: 0, player: 0, shared: 0 };
+
+  allKeys.forEach((key) => {
+    const botDistance = botDistances.get(key);
+    const playerDistance = playerDistances.get(key);
+
+    if (botDistance == null && playerDistance == null) {
+      return;
+    }
+
+    if (playerDistance == null || (botDistance != null && botDistance < playerDistance)) {
+      territory.bot += 1;
+      return;
+    }
+
+    if (botDistance == null || playerDistance < botDistance) {
+      territory.player += 1;
+      return;
+    }
+
+    territory.shared += 1;
+  });
+
+  return territory;
 }
 
 function scoreRoute(position, direction, blockedSet, depth, preset) {
@@ -407,23 +496,29 @@ function pickBotDirection() {
       blockedSet.add(cellKey(next.x, next.y));
       if (!sameFutureCell && !crossedPaths && !isBlocked(projectedPlayerNext)) {
         blockedSet.add(cellKey(projectedPlayerNext.x, projectedPlayerNext.y));
-      }
+        }
 
-      const openDirections = countOpenDirections(next, direction, blockedSet);
-      const area = measureReachableArea(next, blockedSet);
-      const wallDistance = Math.min(
-        next.x,
-        state.board.cols - 1 - next.x,
+        const openDirections = countOpenDirections(next, direction, blockedSet);
+        const area = measureReachableArea(next, blockedSet);
+        const playerArea = isBlocked(projectedPlayerNext, blockedSet)
+          ? 0
+          : measureReachableArea(projectedPlayerNext, blockedSet);
+        const territory = measureTerritoryControl(next, projectedPlayerNext, blockedSet);
+        const wallDistance = Math.min(
+          next.x,
+          state.board.cols - 1 - next.x,
         next.y,
         state.board.rows - 1 - next.y
       );
       const playerDistance = Math.abs(state.player.x - next.x) + Math.abs(state.player.y - next.y);
 
-      let score = openDirections * preset.openWeight
-        + area * preset.areaWeight
-        + wallDistance * preset.wallWeight
-        - playerDistance * preset.pursuitWeight
-        + (direction === state.bot.direction ? preset.stabilityBonus : 0);
+        let score = openDirections * preset.openWeight
+          + area * preset.areaWeight
+          - playerArea * preset.playerAreaWeight
+          + (territory.bot - territory.player) * preset.territorySwingWeight
+          + wallDistance * preset.wallWeight
+          - playerDistance * preset.pursuitWeight
+          + (direction === state.bot.direction ? preset.stabilityBonus : 0);
 
       if (openDirections <= 1) {
         score -= preset.deadEndPenalty;
@@ -468,13 +563,47 @@ function beginMatch(key = state.difficultyKey, resetScore = false) {
   stopAnimation();
   hidePanel(lineIntroPanel);
   hidePanel(lineResultPanel);
+  hidePanel(lineCountdownPanel);
   resetBoard(resetScore);
   renderGame(0);
-  state.animationFrame = requestAnimationFrame(animateGame);
 
   if (lineCanvasWrap) {
     lineCanvasWrap.focus({ preventScroll: true });
   }
+
+  startCountdown();
+}
+
+function startCountdown(step = 3) {
+  state.mode = "countdown";
+
+  if (!lineCountdownPanel || !lineCountdownValue) {
+    state.mode = "playing";
+    setStatus("Grid live");
+    updateHud();
+    state.animationFrame = requestAnimationFrame(animateGame);
+    return;
+  }
+
+  lineCountdownValue.textContent = String(step);
+  lineCountdownValue.dataset.text = String(step);
+  setStatus(`Starting in ${step}`);
+  showPanel(lineCountdownPanel);
+
+  state.countdownTimer = window.setTimeout(() => {
+    if (step > 1) {
+      startCountdown(step - 1);
+      return;
+    }
+
+    hidePanel(lineCountdownPanel);
+    state.countdownTimer = null;
+    state.mode = "playing";
+    setStatus("Grid live");
+    updateHud();
+    renderGame(0);
+    state.animationFrame = requestAnimationFrame(animateGame);
+  }, 760);
 }
 
 function queueTurn(name) {
@@ -679,10 +808,10 @@ function renderGame(progress = 1) {
   ctx.fillStyle = blueHalo;
   ctx.fillRect(0, 0, width, height);
 
-  const laneLeft = offsetX + cell * 0.5;
-  const laneTop = offsetY + cell * 0.5;
-  const laneRight = offsetX + (cols - 0.5) * cell;
-  const laneBottom = offsetY + (rows - 0.5) * cell;
+  const laneLeft = offsetX;
+  const laneTop = offsetY;
+  const laneRight = offsetX + cols * cell;
+  const laneBottom = offsetY + rows * cell;
 
   ctx.save();
   ctx.lineWidth = 1;
@@ -690,13 +819,13 @@ function renderGame(progress = 1) {
   ctx.strokeRect(
     laneLeft + 0.5,
     laneTop + 0.5,
-    Math.max(laneRight - laneLeft, 1),
-    Math.max(laneBottom - laneTop, 1)
+    Math.max(laneRight - laneLeft - 1, 1),
+    Math.max(laneBottom - laneTop - 1, 1)
   );
 
   ctx.strokeStyle = "rgba(255, 230, 0, 0.08)";
-  for (let column = 0; column < cols; column += 1) {
-    const x = offsetX + (column + 0.5) * cell + 0.5;
+  for (let column = 1; column < cols; column += 1) {
+    const x = offsetX + column * cell + 0.5;
     ctx.beginPath();
     ctx.moveTo(x, laneTop);
     ctx.lineTo(x, laneBottom);
@@ -704,8 +833,8 @@ function renderGame(progress = 1) {
   }
 
   ctx.strokeStyle = "rgba(50, 202, 255, 0.06)";
-  for (let row = 0; row < rows; row += 1) {
-    const y = offsetY + (row + 0.5) * cell + 0.5;
+  for (let row = 1; row < rows; row += 1) {
+    const y = offsetY + row * cell + 0.5;
     ctx.beginPath();
     ctx.moveTo(laneLeft, y);
     ctx.lineTo(laneRight, y);
@@ -807,7 +936,7 @@ function handleTouchEnd(event) {
   const deltaY = touch.clientY - state.swipeStart.y;
   state.swipeStart = null;
 
-  if (Math.abs(deltaX) < 24 && Math.abs(deltaY) < 24) {
+  if (Math.abs(deltaX) < 18 && Math.abs(deltaY) < 18) {
     return;
   }
 

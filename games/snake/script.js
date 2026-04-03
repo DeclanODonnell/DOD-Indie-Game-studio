@@ -160,7 +160,7 @@ function measureSnakeBoard() {
   snakeState.context.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const size = Math.min(rect.width, rect.height);
-  const padding = 20;
+  const padding = Math.max(10, Math.floor(size * 0.025));
   const cell = Math.floor((size - padding * 2) / snakeState.boardSize);
   const boardPixels = cell * snakeState.boardSize;
 
@@ -229,8 +229,18 @@ function queueSnakeTurn(name) {
     return;
   }
 
-  const reference = snakeState.queuedDirection || snakeState.direction;
-  if (direction === reference || (direction.x === -reference.x && direction.y === -reference.y)) {
+  const currentDirection = snakeState.direction;
+  const isSameAsCurrent = direction === currentDirection;
+  const isReverseOfCurrent = (
+    direction.x === -currentDirection.x &&
+    direction.y === -currentDirection.y
+  );
+
+  if (isSameAsCurrent || isReverseOfCurrent) {
+    return;
+  }
+
+  if (snakeState.queuedDirection === direction) {
     return;
   }
 
@@ -495,7 +505,7 @@ function handleSnakeTouchEnd(event) {
   const deltaY = touch.clientY - snakeState.swipeStart.y;
   snakeState.swipeStart = null;
 
-  if (Math.abs(deltaX) < 20 && Math.abs(deltaY) < 20) {
+  if (Math.abs(deltaX) < 16 && Math.abs(deltaY) < 16) {
     return;
   }
 

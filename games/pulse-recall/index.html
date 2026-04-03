@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulse Recall | DOD Web Arcade</title>
+  <meta
+    name="description"
+    content="A 3x3 Simon Says-style memory game built for DOD Web Arcade."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="icon" type="image/png" href="../../dodwebarcadelogo.png">
+  <link rel="stylesheet" href="../arcade-mini-base.css?v=arcade-mini-1">
+  <link rel="stylesheet" href="style.css?v=pulse-6">
+</head>
+<body>
+  <div class="page-shell" data-fullscreen-root>
+    <header class="topbar">
+      <a class="brand" href="../../index.html" aria-label="Back to arcade">
+        <span class="brand-mark">
+          <img class="brand-mark-image" src="../../dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+        </span>
+        <span class="brand-copy">
+          <strong>Pulse Recall</strong>
+          <span>Back to arcade</span>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <button class="topbar-button topbar-button-ghost" data-fullscreen-button type="button">Fullscreen</button>
+        <button id="pulse-start-button" class="topbar-button" type="button">Start</button>
+      </div>
+    </header>
+
+    <main class="game-main">
+      <section class="game-head">
+        <h1>Pulse Recall</h1>
+        <p class="intro-copy">Watch the 3x3 pulse grid, remember the order, then replay it cleanly without missing a step.</p>
+      </section>
+
+      <section class="meta-row" aria-label="Game stats">
+        <div class="meta-item">
+          <span>Score</span>
+          <strong id="pulse-score">0</strong>
+        </div>
+        <div class="meta-item">
+          <span>Best</span>
+          <strong id="pulse-best">0</strong>
+        </div>
+      </section>
+
+      <p id="pulse-status" class="sr-only" aria-live="polite">Ready to start.</p>
+
+      <section class="play-grid">
+        <section class="panel play-stage">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Memory Grid</p>
+              <h2>3 x 3 Recall</h2>
+            </div>
+            <span class="panel-copy" id="pulse-round-label">Round 0</span>
+          </div>
+
+          <div class="stage-shell">
+            <div class="memory-grid" id="pulse-grid" aria-label="Pulse Recall grid">
+              <button type="button" class="memory-pad" data-pulse-pad="0" aria-label="Pad 1"></button>
+              <button type="button" class="memory-pad" data-pulse-pad="1" aria-label="Pad 2"></button>
+              <button type="button" class="memory-pad" data-pulse-pad="2" aria-label="Pad 3"></button>
+              <button type="button" class="memory-pad" data-pulse-pad="3" aria-label="Pad 4"></button>
+              <button type="button" class="memory-pad" data-pulse-pad="4" aria-label="Pad 5"></button>
+              <button type="button" class="memory-pad" data-pulse-pad="5" aria-label="Pad 6"></button>
+              <button type="button" class="memory-pad" data-pulse-pad="6" aria-label="Pad 7"></button>
+              <button type="button" class="memory-pad" data-pulse-pad="7" aria-label="Pad 8"></button>
+              <button type="button" class="memory-pad" data-pulse-pad="8" aria-label="Pad 9"></button>
+            </div>
+
+            <div class="overlay-panel" id="pulse-intro-panel">
+              <div class="overlay-box">
+                <p class="result-label">Memory Test</p>
+                <h2>Learn the sequence.</h2>
+                <p class="result-copy">Start the round, watch the pads light up, then repeat the full order without rushing.</p>
+                <div class="menu-actions">
+                  <button id="pulse-intro-start" class="action-button action-button-primary" type="button">Start Run</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="overlay-panel" id="pulse-result-panel" hidden>
+              <div class="overlay-box">
+                <p class="result-label">Memory Broken</p>
+                <h2 id="pulse-result-title">Sequence lost.</h2>
+                <p class="result-copy" id="pulse-result-copy">You made it through 0 clean rounds.</p>
+                <div class="result-actions">
+                  <button id="pulse-play-again" class="action-button action-button-primary" type="button">Play Again</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../fullscreen.js?v=pulse-6"></script>
+  <script src="script.js?v=pulse-6"></script>
+</body>
+</html>

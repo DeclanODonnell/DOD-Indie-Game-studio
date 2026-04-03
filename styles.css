@@ -18,6 +18,39 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #ffd400 #060606;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #ffd400 #060606;
+}
+
+*::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+*::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, rgba(4, 4, 4, 0.98) 0%, rgba(14, 14, 14, 0.98) 100%);
+  border: 1px solid rgba(255, 212, 0, 0.12);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 241, 118, 0.96) 0%, rgba(255, 212, 0, 0.92) 46%, rgba(205, 148, 0, 0.96) 100%);
+  border: 2px solid #060606;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(255, 212, 0, 0.16), inset 0 0 10px rgba(255, 255, 255, 0.18), 0 0 14px rgba(255, 212, 0, 0.2);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255, 245, 152, 0.98) 0%, rgba(255, 221, 72, 0.96) 46%, rgba(255, 182, 18, 0.98) 100%);
+}
+
+*::-webkit-scrollbar-corner {
+  background: #050505;
 }
 
 body {
@@ -32,12 +65,17 @@ body {
     linear-gradient(180deg, #020202 0%, #050505 42%, #0a0a0a 100%);
 }
 
+body.has-intro {
+  overflow: hidden;
+}
+
 body::before,
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
+  transition: opacity 500ms ease;
 }
 
 body::before {
@@ -57,6 +95,11 @@ body::after {
     transparent 6px
   );
   opacity: 0.34;
+}
+
+body.has-intro::before,
+body.has-intro::after {
+  opacity: 0;
 }
 
 a {
@@ -81,9 +124,405 @@ strong {
   width: min(980px, calc(100% - 28px));
   margin: 0 auto;
   padding: 34px 0 72px;
+  transition: opacity 900ms ease, transform 1100ms cubic-bezier(0.2, 0.9, 0.2, 1), filter 1100ms ease;
+}
+
+body.has-intro .page-shell {
+  opacity: 0;
+  transform: scale(1.04);
+  filter: blur(14px);
+  pointer-events: none;
+}
+
+body.intro-revealing .page-shell {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.arcade-intro[hidden] {
+  display: none;
+}
+
+.arcade-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 212, 0, 0.08), transparent 18%),
+    linear-gradient(180deg, #020202 0%, #060606 44%, #010101 100%);
+  opacity: 1;
+  transition: opacity 760ms ease, visibility 0s linear 760ms;
+}
+
+body.intro-revealing .arcade-intro {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.intro-room {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255, 212, 0, 0.08), transparent 20%),
+    linear-gradient(180deg, rgba(18, 18, 18, 0.5) 0%, rgba(0, 0, 0, 0) 34%);
+}
+
+.intro-room::before {
+  content: "";
+  position: absolute;
+  left: -14%;
+  right: -14%;
+  bottom: -20vh;
+  height: 62vh;
+  background:
+    linear-gradient(180deg, rgba(255, 212, 0, 0.06), rgba(255, 212, 0, 0)),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 212, 0, 0.07) 0,
+      rgba(255, 212, 0, 0.07) 2px,
+      transparent 2px,
+      transparent 90px
+    ),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 212, 0, 0.04) 0,
+      rgba(255, 212, 0, 0.04) 2px,
+      transparent 2px,
+      transparent 74px
+    ),
+    linear-gradient(180deg, rgba(22, 22, 22, 0.08) 0%, rgba(0, 0, 0, 0.78) 100%);
+  transform: perspective(1000px) rotateX(77deg);
+  transform-origin: center bottom;
+  opacity: 0.86;
+}
+
+.intro-room::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 212, 0, 0.18), transparent 16%),
+    radial-gradient(circle at 50% 58%, rgba(255, 212, 0, 0.08), transparent 32%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.intro-fog {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(42px);
+  opacity: 0.24;
+  animation: intro-fog-drift 7.4s ease-in-out infinite alternate;
+}
+
+.intro-fog-a {
+  left: 18%;
+  bottom: 16%;
+  width: 36vw;
+  height: 18vh;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 212, 0, 0.18), transparent 68%);
+}
+
+.intro-fog-b {
+  right: 12%;
+  bottom: 10%;
+  width: 30vw;
+  height: 16vh;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 230, 109, 0.16), transparent 70%);
+  animation-duration: 9.2s;
+}
+
+.intro-camera {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  perspective: 1600px;
+}
+
+.arcade-machine {
+  position: relative;
+  width: min(40vw, 460px);
+  aspect-ratio: 0.72;
+  transform-style: preserve-3d;
+  transform: translate3d(0, 8vh, -220px) rotateX(8deg) scale(0.58);
+  transition: opacity 360ms ease, transform 360ms ease;
+}
+
+body.has-intro .arcade-machine {
+  animation: intro-push-in 3s cubic-bezier(0.12, 0.72, 0.18, 1) forwards;
+}
+
+body.has-intro.intro-revealing .arcade-machine {
+  animation: intro-fade-push 820ms cubic-bezier(0.16, 0.84, 0.24, 1) forwards;
+}
+
+.arcade-machine-shadow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -6%;
+  height: 10%;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.72), transparent 70%);
+  filter: blur(12px);
+}
+
+.arcade-cabinet {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(44, 44, 44, 0.92) 0%, rgba(12, 12, 12, 0.98) 36%, rgba(6, 6, 6, 1) 100%);
+  clip-path: polygon(22% 0%, 78% 0%, 88% 12%, 88% 34%, 82% 46%, 82% 74%, 72% 100%, 28% 100%, 18% 74%, 18% 46%, 12% 34%, 12% 12%);
+  border: 1px solid rgba(255, 212, 0, 0.16);
+  box-shadow:
+    0 0 0 1px rgba(255, 212, 0, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 40px 120px rgba(0, 0, 0, 0.58);
+}
+
+.arcade-cabinet::before,
+.arcade-cabinet::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.arcade-cabinet::before {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06), transparent 24%, transparent 76%, rgba(255, 212, 0, 0.08));
+  mix-blend-mode: screen;
+}
+
+.arcade-cabinet::after {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 212, 0, 0.15), transparent 26%),
+    linear-gradient(180deg, rgba(255, 212, 0, 0.06), transparent 28%);
+}
+
+.arcade-marquee {
+  position: absolute;
+  left: 25%;
+  right: 25%;
+  top: 7%;
+  height: 9%;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 212, 0, 0.28) 0%, rgba(255, 212, 0, 0.08) 100%),
+    linear-gradient(180deg, rgba(18, 18, 18, 0.92), rgba(6, 6, 6, 0.98));
+  box-shadow:
+    0 0 28px rgba(255, 212, 0, 0.26),
+    inset 0 0 0 1px rgba(255, 212, 0, 0.14);
+}
+
+.arcade-screen-shell {
+  position: absolute;
+  left: 21%;
+  right: 21%;
+  top: 18%;
+  height: 40%;
+  transform: perspective(1000px) rotateX(6deg);
+  transform-origin: center top;
+}
+
+.arcade-screen-frame {
+  position: absolute;
+  inset: 0;
+  padding: 16px;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(28, 28, 28, 0.98), rgba(8, 8, 8, 1));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 0 0 2px rgba(255, 212, 0, 0.08);
+}
+
+.arcade-screen-surface {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 232, 80, 0.26), transparent 30%),
+    linear-gradient(180deg, rgba(10, 10, 10, 0.94) 0%, rgba(0, 0, 0, 1) 100%);
+}
+
+.arcade-screen-surface {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  box-shadow:
+    0 0 70px rgba(255, 212, 0, 0.22),
+    inset 0 0 0 1px rgba(255, 212, 0, 0.12);
+}
+
+.arcade-screen-bloom {
+  position: absolute;
+  inset: -12%;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 212, 0, 0.2), transparent 34%),
+    radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.12), transparent 22%);
+  mix-blend-mode: screen;
+  animation: intro-screen-pulse 1.9s ease-in-out infinite alternate;
+}
+
+.arcade-screen-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0,
+    rgba(255, 255, 255, 0.04) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  opacity: 0.32;
+  pointer-events: none;
+}
+
+.arcade-screen-logo {
+  position: absolute;
+  inset: 12%;
+  width: 76%;
+  height: 76%;
+  margin: auto;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 28px rgba(255, 212, 0, 0.16))
+    drop-shadow(0 0 60px rgba(255, 212, 0, 0.08));
+}
+
+.arcade-control-deck {
+  position: absolute;
+  left: 21%;
+  right: 21%;
+  top: 62%;
+  height: 12%;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(34, 34, 34, 0.98), rgba(8, 8, 8, 1));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    inset 0 0 0 2px rgba(255, 212, 0, 0.08);
+  transform: perspective(900px) rotateX(58deg);
+  transform-origin: center top;
+}
+
+.arcade-stick {
+  position: absolute;
+  bottom: 22%;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffd400 0%, #c98a00 100%);
+  box-shadow: 0 0 16px rgba(255, 212, 0, 0.3);
+}
+
+.arcade-stick::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -24px;
+  width: 6px;
+  height: 24px;
+  margin-left: -3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 244, 178, 0.86), rgba(255, 212, 0, 0.3));
+}
+
+.arcade-stick-left {
+  left: 16%;
+}
+
+.arcade-stick-right {
+  right: 16%;
+}
+
+.arcade-buttons {
+  position: absolute;
+  top: 22%;
+  display: flex;
+  gap: 8px;
+}
+
+.arcade-buttons-left {
+  left: 34%;
+}
+
+.arcade-buttons-right {
+  right: 26%;
+}
+
+.arcade-buttons span {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe97c 0%, #ffb100 100%);
+  box-shadow: 0 0 12px rgba(255, 212, 0, 0.34);
+}
+
+.arcade-base {
+  position: absolute;
+  left: 29%;
+  right: 29%;
+  bottom: 6%;
+  height: 15%;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(36, 36, 36, 0.98), rgba(7, 7, 7, 1));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 0 0 2px rgba(255, 212, 0, 0.08);
+}
+
+@keyframes intro-push-in {
+  0% {
+    transform: translate3d(0, 11vh, -260px) rotateX(8deg) scale(0.42);
+  }
+  100% {
+    transform: translate3d(0, -1vh, 0) rotateX(0deg) scale(1.08);
+  }
+}
+
+@keyframes intro-fade-push {
+  0% {
+    transform: translate3d(0, -1vh, 0) rotateX(0deg) scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, -3.6vh, 0) rotateX(0deg) scale(1.22);
+    opacity: 0.82;
+  }
+}
+
+@keyframes intro-screen-pulse {
+  0% {
+    opacity: 0.72;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes intro-fog-drift {
+  0% {
+    transform: translate3d(-1.5vw, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(1.5vw, -1.8vh, 0) scale(1.06);
+  }
 }
 
 .site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
   margin-bottom: 40px;
 }
 
@@ -154,6 +593,31 @@ strong {
   color: var(--muted);
 }
 
+.footer-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+  text-align: right;
+}
+
+.footer-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--yellow);
+  background: rgba(255, 212, 0, 0.05);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease;
+}
+
 .footer-link {
   color: var(--yellow);
   font-weight: 700;
@@ -163,7 +627,8 @@ strong {
 .brand:hover,
 .brand:focus-visible,
 .game-link:focus-visible,
-.footer-link:focus-visible {
+.footer-link:focus-visible,
+.footer-button:focus-visible {
   outline: none;
   border-color: rgba(255, 212, 0, 0.32);
   box-shadow: 0 0 0 1px rgba(255, 212, 0, 0.14), var(--shadow);
@@ -175,8 +640,15 @@ strong {
 }
 
 .footer-link:hover,
-.footer-link:focus-visible {
+.footer-link:focus-visible,
+.footer-button:hover,
+.footer-button:focus-visible {
   color: var(--yellow-strong);
+}
+
+.footer-button:hover,
+.footer-button:focus-visible {
+  transform: translateY(-2px);
 }
 
 .intro {
@@ -188,6 +660,50 @@ strong {
 h1 {
   font-size: clamp(2.8rem, 8vw, 5rem);
   line-height: 0.92;
+}
+
+.glitch-text {
+  position: relative;
+  display: inline-block;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.glitch-text::before {
+  left: 2px;
+  text-shadow: -2px 0 #ff00c1;
+  clip: rect(44px, 9999px, 56px, 0);
+  animation: arcade-glitch-1 5s infinite linear alternate-reverse;
+}
+
+.glitch-text::after {
+  left: -2px;
+  text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1;
+  clip: rect(65px, 9999px, 100px, 0);
+  animation: arcade-glitch-2 1s infinite linear alternate-reverse;
+}
+
+@keyframes arcade-glitch-1 {
+  0% { clip: rect(31px, 9999px, 94px, 0); }
+  20% { clip: rect(62px, 9999px, 42px, 0); }
+  100% { clip: rect(23px, 9999px, 82px, 0); }
+}
+
+@keyframes arcade-glitch-2 {
+  0% { clip: rect(65px, 9999px, 100px, 0); }
+  100% { clip: rect(45px, 9999px, 89px, 0); }
 }
 
 .intro-copy,
@@ -267,9 +783,48 @@ h1 {
 }
 
 @media (max-width: 720px) {
+  .site-header {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 32px;
+  }
+
+  .arcade-machine {
+    width: min(66vw, 340px);
+  }
+
+  .arcade-screen-shell {
+    left: 18%;
+    right: 18%;
+    top: 17%;
+    height: 39%;
+  }
+
+  .arcade-control-deck {
+    left: 17%;
+    right: 17%;
+    top: 61%;
+  }
+
+  .arcade-base {
+    left: 24%;
+    right: 24%;
+  }
+
   .page-shell {
     width: min(calc(100% - 18px), 980px);
     padding-top: 18px;
+  }
+
+  .glitch-text {
+    max-width: 8.4ch;
+    margin-inline: auto;
+    line-height: 0.94;
+  }
+
+  .glitch-text::before,
+  .glitch-text::after {
+    display: none;
   }
 
   .game-row {
@@ -282,5 +837,10 @@ h1 {
     flex-direction: column;
     align-items: start;
     padding-top: 16px;
+  }
+
+  .footer-copy {
+    justify-content: flex-start;
+    text-align: left;
   }
 }

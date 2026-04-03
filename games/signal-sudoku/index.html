@@ -14,15 +14,15 @@
     href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
     rel="stylesheet"
   >
-  <link rel="icon" type="image/png" href="dodwebarcadelogo.png">
-  <link rel="stylesheet" href="sudoku.css">
+  <link rel="icon" type="image/png" href="../../dodwebarcadelogo.png">
+  <link rel="stylesheet" href="style.css?v=sudoku-fix-15">
 </head>
 <body>
   <div class="game-shell" data-fullscreen-root>
     <header class="topbar">
-      <a class="brand" href="index.html" aria-label="Back to arcade">
+      <a class="brand" href="../../index.html" aria-label="Back to arcade">
         <span class="brand-mark">
-          <img class="brand-mark-image" src="dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+          <img class="brand-mark-image" src="../../dodwebarcadelogo.png" alt="DOD Web Arcade logo">
         </span>
         <span class="brand-copy">
           <strong>Signal Sudoku</strong>
@@ -31,11 +31,6 @@
       </a>
 
       <div class="topbar-actions">
-        <div class="topbar-signals" aria-label="Game status">
-          <span class="signal-chip">Browser Game</span>
-          <span class="signal-chip">Black + Yellow</span>
-          <span class="signal-chip">Logic Grid</span>
-        </div>
         <button class="action-button" data-fullscreen-button type="button">Fullscreen</button>
       </div>
     </header>
@@ -43,7 +38,7 @@
     <main class="game-main">
       <section class="hero-panel reveal">
         <div class="hero-copy">
-          <p class="eyebrow">DOD Arcade / logic cabinet</p>
+          <p class="eyebrow">DOD Arcade</p>
           <div class="command-strip" aria-label="Mode notes">
             <span>boot.puzzle("signal_sudoku")</span>
             <span>modes = rookie / cipher / impossible</span>
@@ -88,12 +83,8 @@
                 <strong id="progress-value">0 / 81</strong>
               </div>
               <div>
-                <span>Lives</span>
-                <strong id="lives-value">3 / 3</strong>
-              </div>
-              <div>
-                <span>State</span>
-                <strong id="state-value">Generating</strong>
+                <span>Hearts</span>
+                <strong id="lives-value" class="lives-display" aria-label="3 hearts remaining"></strong>
               </div>
             </div>
           </div>
@@ -118,11 +109,29 @@
             <button id="erase-button" class="action-button" type="button">Erase</button>
           </div>
 
-          <div class="board-shell">
+          <div class="board-shell" id="board-shell">
             <div id="board" class="board" role="grid" aria-label="Sudoku board"></div>
+            <div class="fail-overlay" id="fail-overlay" hidden aria-hidden="true">
+              <div class="fail-card" role="dialog" aria-modal="true" aria-labelledby="fail-title">
+                <p class="eyebrow">Signal lost</p>
+                <h2 id="fail-title">You lose</h2>
+                <p class="card-copy" id="fail-copy">
+                  Three hearts gone. Pick a reset or swap the difficulty.
+                </p>
+                <div class="fail-actions">
+                  <button id="retry-button" class="action-button action-primary" type="button">Try Again</button>
+                </div>
+                <div class="fail-mode-actions" aria-label="Choose difficulty after losing">
+                  <button class="action-button fail-mode-button" type="button" data-fail-mode="rookie">Rookie</button>
+                  <button class="action-button fail-mode-button" type="button" data-fail-mode="cipher">Cipher</button>
+                  <button class="action-button fail-mode-button" type="button" data-fail-mode="impossible">Impossible</button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="board-footer">
+          <div class="sr-only" aria-hidden="true">
+            <p id="state-value" aria-live="polite">Generating</p>
             <p id="selection-value" aria-live="polite">Select a square to begin.</p>
             <p id="message-value" aria-live="polite">Generating rookie puzzle...</p>
           </div>
@@ -157,7 +166,7 @@
     </main>
   </div>
 
-  <script src="fullscreen.js"></script>
-  <script src="sudoku.js"></script>
+  <script src="../../fullscreen.js?v=sudoku-fix-13"></script>
+  <script src="script.js?v=sudoku-fix-13"></script>
 </body>
 </html>
