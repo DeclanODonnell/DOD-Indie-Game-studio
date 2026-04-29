@@ -1,0 +1,646 @@
+:root {
+  --bg-top: #07110b;
+  --bg-bottom: #020503;
+  --panel: rgba(9, 12, 10, 0.92);
+  --panel-strong: rgba(6, 8, 7, 0.98);
+  --panel-soft: rgba(255, 255, 255, 0.04);
+  --line: rgba(184, 255, 93, 0.18);
+  --line-strong: rgba(184, 255, 93, 0.34);
+  --text: #fff9e4;
+  --muted: #c7c1a8;
+  --accent: #b8ff5d;
+  --accent-strong: #e8ffc2;
+  --accent-secondary: #ffe05d;
+  --accent-rgb: 184, 255, 93;
+  --shadow: 0 22px 40px rgba(0, 0, 0, 0.42);
+  --pixel-cut: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  --panel-width: min(1720px, calc(100% - 28px));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Chakra Petch", sans-serif;
+  color: var(--text);
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 14% 10%, rgba(var(--accent-rgb), 0.16), transparent 18%),
+    radial-gradient(circle at 86% 18%, rgba(var(--accent-rgb), 0.12), transparent 22%),
+    linear-gradient(180deg, var(--bg-top) 0%, #0b100d 42%, var(--bg-bottom) 100%);
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+body::before {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.82), transparent 88%);
+}
+
+body::after {
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.028) 0,
+      rgba(255, 255, 255, 0.028) 2px,
+      transparent 2px,
+      transparent 6px
+    );
+  opacity: 0.24;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+p,
+strong {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+.brand-copy strong,
+.summary-card strong,
+.rank-card strong,
+.chrome-link,
+.quick-nav a {
+  font-family: "Press Start 2P", sans-serif;
+}
+
+.page-shell {
+  width: var(--panel-width);
+  margin: 0 auto;
+  padding: 10px 0 20px;
+  display: grid;
+  gap: 10px;
+}
+
+.panel,
+.chrome-link,
+.summary-card,
+.quick-nav a,
+.species-panel,
+.rank-card {
+  clip-path: var(--pixel-cut);
+}
+
+.panel,
+.species-panel,
+.rank-card {
+  position: relative;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
+    linear-gradient(180deg, var(--panel) 0%, var(--panel-strong) 100%);
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  color: var(--accent);
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 20px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  background: rgba(5, 7, 6, 0.84);
+  box-shadow: var(--shadow);
+  clip-path: var(--pixel-cut);
+}
+
+.brand-mark {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.6);
+  clip-path: var(--pixel-cut);
+}
+
+.brand-logo {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-copy strong {
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.brand-copy span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.topbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chrome-link {
+  min-height: 42px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.08);
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+
+.chrome-link:hover,
+.chrome-link:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+}
+
+.reference-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.intro-panel {
+  padding: 22px;
+  display: grid;
+  gap: 14px;
+}
+
+.intro-panel h1 {
+  font-size: clamp(1.3rem, 3vw, 2.5rem);
+  line-height: 1.12;
+}
+
+.intro-copy,
+.species-copy,
+.rank-note {
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.summary-card {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  background: var(--panel-soft);
+  display: grid;
+  gap: 6px;
+}
+
+.summary-card span {
+  color: var(--muted);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.summary-card strong {
+  font-size: 0.62rem;
+  line-height: 1.5;
+}
+
+.quick-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-nav a {
+  min-height: 34px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  color: var(--accent-strong);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.5rem;
+  line-height: 1.3;
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+
+.quick-nav a:hover,
+.quick-nav a:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+}
+
+.stage-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.stage-panel {
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.stage-head {
+  display: grid;
+  gap: 8px;
+}
+
+.stage-head h2 {
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  line-height: 1.3;
+}
+
+.species-list {
+  display: grid;
+  gap: 12px;
+}
+
+.species-panel {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.species-head {
+  display: grid;
+  gap: 6px;
+}
+
+.species-head h3 {
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.rank-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rank-card {
+  min-height: 312px;
+  padding: 14px 12px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  background:
+    radial-gradient(circle at top, rgba(var(--accent-rgb), 0.1), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0)),
+    linear-gradient(180deg, rgba(10, 11, 10, 0.98), rgba(6, 8, 7, 0.98));
+}
+
+.rank-card strong {
+  font-size: 0.56rem;
+  line-height: 1.45;
+}
+
+.rank-preview {
+  width: 100%;
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+}
+
+.rank-note {
+  font-size: 0.76rem;
+}
+
+.creature-graphic {
+  position: relative;
+  display: block;
+  overflow: visible;
+  transform-origin: center bottom;
+}
+
+.creature-graphic.is-reference {
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.36)) saturate(1.05);
+  animation: creature-bob 2.8s ease-in-out infinite;
+}
+
+.creature-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  shape-rendering: crispEdges;
+}
+
+.creature-svg .eye,
+.creature-svg .pupil {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.creature-svg .eye {
+  animation: eye-blink 5.4s steps(1, end) infinite;
+}
+
+.creature-svg .wing,
+.creature-svg .ear,
+.creature-svg .tail,
+.creature-svg .antenna,
+.creature-svg .arm,
+.creature-svg .hair,
+.creature-svg .headband-tail,
+.creature-svg .crown,
+.creature-svg .crown-glint,
+.creature-svg .halo,
+.creature-svg .aura,
+.creature-svg .sparkle,
+.creature-svg .visor,
+.creature-svg .cyber-core {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.creature-svg .wing {
+  animation: wing-flap 0.95s steps(2, end) infinite alternate;
+}
+
+.creature-svg .ear {
+  animation: ear-flick 2.8s steps(2, end) infinite;
+}
+
+.creature-svg .tail {
+  animation: tail-wag 1.8s steps(2, end) infinite alternate;
+}
+
+.creature-svg .antenna {
+  animation: antenna-bob 1.8s steps(2, end) infinite alternate;
+}
+
+.creature-svg .arm {
+  animation: arm-bounce 2.4s steps(2, end) infinite alternate;
+}
+
+.creature-svg .hair,
+.creature-svg .headband-tail {
+  animation: hair-sway 1.7s steps(2, end) infinite alternate;
+}
+
+.creature-svg .crown {
+  animation: halo-float 2.2s ease-in-out infinite alternate;
+}
+
+.creature-svg .crown-glint {
+  animation: crown-glint 1.5s ease-in-out infinite alternate;
+}
+
+.creature-svg .visor {
+  animation: visor-scan 1.6s linear infinite;
+}
+
+.creature-svg .cyber-core {
+  animation: core-pulse 1.4s steps(2, end) infinite;
+}
+
+.creature-svg .aura {
+  animation: aura-pulse 1.6s ease-in-out infinite alternate;
+}
+
+.creature-svg .halo {
+  animation: halo-float 2.2s ease-in-out infinite alternate;
+}
+
+.creature-svg .sparkle {
+  animation: sparkle-pop 1.2s steps(2, end) infinite alternate;
+}
+
+.creature-svg .mouth {
+  opacity: 0.78;
+}
+
+@keyframes creature-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes eye-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  94%,
+  98% {
+    transform: scaleY(0.18);
+  }
+}
+
+@keyframes wing-flap {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-4px) rotate(8deg);
+  }
+}
+
+@keyframes ear-flick {
+  0%,
+  80%,
+  100% {
+    transform: rotate(0deg);
+  }
+  90% {
+    transform: rotate(-10deg);
+  }
+}
+
+@keyframes tail-wag {
+  0% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(9deg);
+  }
+}
+
+@keyframes antenna-bob {
+  0% {
+    transform: rotate(-6deg);
+  }
+  100% {
+    transform: rotate(7deg);
+  }
+}
+
+@keyframes arm-bounce {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes hair-sway {
+  0% {
+    transform: rotate(-4deg);
+  }
+  100% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes visor-scan {
+  0% {
+    opacity: 0.65;
+    transform: translateX(-2px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(2px);
+  }
+  100% {
+    opacity: 0.72;
+    transform: translateX(-2px);
+  }
+}
+
+@keyframes core-pulse {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.25);
+  }
+}
+
+@keyframes aura-pulse {
+  0% {
+    opacity: 0.45;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 0.92;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes halo-float {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes sparkle-pop {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes crown-glint {
+  0% {
+    opacity: 0.22;
+    transform: rotate(18deg) translateX(-2px);
+  }
+  100% {
+    opacity: 0.82;
+    transform: rotate(18deg) translateX(5px);
+  }
+}
+
+@media (max-width: 1460px) {
+  .rank-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1060px) {
+  .summary-row,
+  .rank-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --panel-width: min(100% - 12px, 1720px);
+  }
+
+  .page-shell {
+    padding: 8px 0 16px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+  }
+
+  .summary-row,
+  .rank-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .intro-panel,
+  .stage-panel,
+  .species-panel {
+    padding: 14px;
+  }
+
+  .rank-card {
+    min-height: 286px;
+  }
+
+  .rank-preview {
+    min-height: 196px;
+  }
+}

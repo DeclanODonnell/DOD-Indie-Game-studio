@@ -1,0 +1,3 @@
+**/bin/
+**/obj/
+.after-hours-server.pid

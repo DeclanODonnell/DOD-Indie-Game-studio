@@ -1,7 +1,7 @@
 const STAGES = [
   { index: 0, label: "Stage 1", title: "Choose Your Character", copy: "Pick one starter and build it from Worker to God form before Stage 2 opens.", choices: ["ant", "fly", "bee"] },
   { index: 1, label: "Stage 2", title: "Choose Your Stage 2 Animal", copy: "Stage 2 resets the run, but your permanent boost is stronger. Pick one animal and climb every rank again.", choices: ["dog", "cat", "koala"] },
-  { index: 2, label: "Stage 3", title: "Choose Your Final Animal", copy: "This is the last stage for now. Pick one final animal and push it all the way into God form.", choices: ["shark", "bear", "ape"] }
+  { index: 2, label: "Stage 3", title: "Choose Your Final Animal", copy: "This is the last revealed stage. Pick one final animal, push it into God form, and see what wakes after the end.", choices: ["shark", "bear", "ape"] }
 ];
 
 const RANKS = [
@@ -13,6 +13,9 @@ const RANKS = [
 ];
 
 const STAGE_BONUSES = [1, 1.75, 2.5];
+const CELESTIAL_THRESHOLD = 88000000;
+const CELESTIAL_BONUS = 3.75;
+const STORAGE_KEY = "dod-animal-clicker-save-v2";
 const HELPER_BLUEPRINTS = [
   { baseCost: 24, baseIncome: 0.45, growth: 1.32 },
   { baseCost: 120, baseIncome: 2.6, growth: 1.34 },
@@ -71,16 +74,22 @@ const SPECIES = {
     upgradeNames: ["Serrated Bite", "Deep Current", "Hunter School", "Predator Rush", "Titan Fin Core"]
   },
   bear: {
-    stage: 2, name: "Bear", resource: "Claws", description: "Maul the forest and bank brute force.", clickBase: 2.7, helperScale: 5.6, costScale: 3.25,
-    colors: { primary: "#d9a06c", secondary: "#7d4a23", strong: "#ffe0c0" },
-    helperNames: ["Forest Cub", "River Forager", "Cave Bruiser", "Mountain Alpha"],
-    upgradeNames: ["Iron Paws", "Forest Roar", "Cub Guard", "Cave Fury", "Titan Roar Engine"]
+    stage: 2, name: "Polar Bear", resource: "Fish", description: "Own the ice shelf and drag in frozen fish hauls.", clickBase: 2.7, helperScale: 5.6, costScale: 3.25,
+    colors: { primary: "#eef7ff", secondary: "#92b8d7", strong: "#ffffff" },
+    helperNames: ["Ice Cub", "Floe Runner", "Seal Scout", "Aurora Alpha"],
+    upgradeNames: ["Frozen Paws", "Glacier Hunger", "Ice Pack", "Whiteout Rush", "Arctic Core"]
   },
   ape: {
-    stage: 2, name: "Ape", resource: "Totems", description: "Build jungle power with a full troop.", clickBase: 2.7, helperScale: 5.6, costScale: 3.25,
-    colors: { primary: "#a6ff73", secondary: "#4c8a2b", strong: "#e6ffcc" },
+    stage: 2, name: "Ape", resource: "Totems", description: "Build jungle power with a heavy brown troop bruiser.", clickBase: 2.7, helperScale: 5.6, costScale: 3.25,
+    colors: { primary: "#b8885d", secondary: "#6e4327", strong: "#f2dcc8" },
     helperNames: ["Young Ape", "Troop Scout", "Vine Runner", "Primal Alpha"],
     upgradeNames: ["Heavy Fists", "Vine Routes", "Troop Order", "Jungle Rhythm", "Stone Crown Core"]
+  },
+  celestial: {
+    stage: 3, name: "Celestial", resource: "Stars", description: "The hidden final silhouette beyond every god form.", clickBase: 5.8, helperScale: 8.2, costScale: 4.4,
+    colors: { primary: "#0d1018", secondary: "#1a2231", strong: "#cde7ff" },
+    helperNames: ["Star Wisp", "Astral Echo", "Void Seraph", "Comet Herald"],
+    upgradeNames: ["Stellar Touch", "Gravity Thread", "Astral Chorus", "Nebula Engine", "Cosmic Bloom"]
   }
 };
 
@@ -135,13 +144,17 @@ const state = {
   rankIndex: 0,
   resources: 0,
   rankProgress: 0,
+  celestialUnlocked: false,
+  celestialComplete: false,
   helperCounts: Array(HELPER_BLUEPRINTS.length).fill(0),
   ownedUpgrades: [],
   activeTab: "helpers",
   mute: false,
   uiDirty: true,
+  saveDirty: false,
   lastFrameAt: performance.now(),
-  lastRenderAt: 0
+  lastRenderAt: 0,
+  lastSaveAt: 0
 };
 
 const audioState = { context: null };
@@ -149,6 +162,7 @@ const renderCache = { selection: "", main: "", helpers: "", helpersList: "", upg
 
 function markDirty() {
   state.uiDirty = true;
+  state.saveDirty = true;
 }
 
 function clamp(value, min, max) {
@@ -203,15 +217,29 @@ function getSpecies(speciesId = state.speciesId) {
   return speciesId ? SPECIES[speciesId] || null : null;
 }
 
+function isCelestialSpecies(speciesId = state.speciesId) {
+  return speciesId === "celestial";
+}
+
+function hasCompletedMainJourney() {
+  return state.stageCompleted.every(Boolean);
+}
+
 function getRank(rankIndex = state.rankIndex) {
   return RANKS[rankIndex] || RANKS[0];
 }
 
 function getNextRank() {
+  if (isCelestialSpecies()) {
+    return null;
+  }
   return RANKS[state.rankIndex + 1] || null;
 }
 
 function getThreshold() {
+  if (isCelestialSpecies()) {
+    return CELESTIAL_THRESHOLD;
+  }
   return getRank().thresholds[state.stageIndex];
 }
 
@@ -220,6 +248,9 @@ function getProgressRatio() {
 }
 
 function isFinalRank(rankIndex = state.rankIndex) {
+  if (isCelestialSpecies()) {
+    return true;
+  }
   return rankIndex === RANKS.length - 1;
 }
 
@@ -233,6 +264,9 @@ function getCurrentProgressValue() {
 
 function getFormName(speciesId = state.speciesId, rankIndex = state.rankIndex) {
   const species = getSpecies(speciesId);
+  if (speciesId === "celestial") {
+    return "CELESTIAL";
+  }
   const rank = getRank(rankIndex);
   return species ? `${rank.label} ${species.name}` : `${rank.label} Animal`;
 }
@@ -245,6 +279,98 @@ function getSelectionCopy() {
 
 function getThemeSpecies() {
   return getSpecies() || getSpecies(getStage().choices[0]);
+}
+
+function saveState() {
+  try {
+    const payload = {
+      stageIndex: state.stageIndex,
+      unlockedStageIndex: state.unlockedStageIndex,
+      stageCompleted: state.stageCompleted,
+      chosenAnimals: state.chosenAnimals,
+      prestigeMultiplier: state.prestigeMultiplier,
+      speciesId: state.speciesId,
+      rankIndex: state.rankIndex,
+      resources: state.resources,
+      rankProgress: state.rankProgress,
+      celestialUnlocked: state.celestialUnlocked,
+      celestialComplete: state.celestialComplete,
+      helperCounts: state.helperCounts,
+      ownedUpgrades: state.ownedUpgrades,
+      activeTab: state.activeTab,
+      mute: state.mute
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    state.saveDirty = false;
+  } catch {
+    state.saveDirty = false;
+  }
+}
+
+function loadState() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return;
+    }
+    const saved = JSON.parse(raw);
+    state.stageIndex = clamp(Number(saved.stageIndex) || 0, 0, STAGES.length - 1);
+    state.unlockedStageIndex = clamp(Number(saved.unlockedStageIndex) || 0, 0, STAGES.length - 1);
+    state.stageCompleted = Array.isArray(saved.stageCompleted)
+      ? STAGES.map((_, index) => Boolean(saved.stageCompleted[index]))
+      : Array(STAGES.length).fill(false);
+    state.chosenAnimals = Array.isArray(saved.chosenAnimals)
+      ? STAGES.map((_, index) => SPECIES[saved.chosenAnimals[index]] ? saved.chosenAnimals[index] : null)
+      : Array(STAGES.length).fill(null);
+    state.prestigeMultiplier = Number(saved.prestigeMultiplier) || STAGE_BONUSES[state.stageIndex];
+    state.speciesId = SPECIES[saved.speciesId] ? saved.speciesId : null;
+    state.rankIndex = clamp(Number(saved.rankIndex) || 0, 0, RANKS.length - 1);
+    state.resources = Math.max(0, Number(saved.resources) || 0);
+    state.rankProgress = state.resources;
+    state.celestialUnlocked = Boolean(saved.celestialUnlocked);
+    state.celestialComplete = Boolean(saved.celestialComplete);
+    state.helperCounts = Array.isArray(saved.helperCounts)
+      ? HELPER_BLUEPRINTS.map((_, index) => Math.max(0, Number(saved.helperCounts[index]) || 0))
+      : Array(HELPER_BLUEPRINTS.length).fill(0);
+    state.ownedUpgrades = Array.isArray(saved.ownedUpgrades)
+      ? saved.ownedUpgrades.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value >= 0 && value < UPGRADE_BLUEPRINTS.length)
+      : [];
+    state.activeTab = saved.activeTab === "upgrades" ? "upgrades" : "helpers";
+    state.mute = Boolean(saved.mute);
+    if (state.celestialComplete) {
+      state.celestialUnlocked = true;
+      state.speciesId = "celestial";
+      state.mode = "play";
+    } else if (state.celestialUnlocked) {
+      state.speciesId = "celestial";
+      state.mode = "play";
+    } else if (state.speciesId) {
+      state.mode = "play";
+    } else {
+      state.mode = "select";
+    }
+    const highestCompletedStage = state.stageCompleted.reduce((max, complete, index) => (complete ? index : max), -1);
+    state.unlockedStageIndex = clamp(Math.max(state.unlockedStageIndex, highestCompletedStage + 1), 0, STAGES.length - 1);
+    if (hasCompletedMainJourney() && !state.celestialUnlocked && !state.celestialComplete) {
+      state.celestialUnlocked = true;
+      state.speciesId = "celestial";
+      state.mode = "play";
+      state.rankIndex = 0;
+      state.resources = 0;
+      state.rankProgress = 0;
+      state.helperCounts = Array(HELPER_BLUEPRINTS.length).fill(0);
+      state.ownedUpgrades = [];
+      state.activeTab = "helpers";
+      state.prestigeMultiplier = CELESTIAL_BONUS;
+    }
+    if (!state.speciesId && state.mode === "play") {
+      state.mode = "select";
+    }
+    state.rankProgress = state.resources;
+    state.saveDirty = false;
+  } catch {
+    // ignore corrupted save and boot fresh
+  }
 }
 
 function getUpgradeSnapshot() {
@@ -327,15 +453,21 @@ function addGain(amount, progressMultiplier = 1) {
 }
 
 function canRankUp() {
+  if (isCelestialSpecies()) {
+    return false;
+  }
   return Boolean(getSpecies()) && !isFinalRank() && isCurrentRankComplete();
 }
 
 function canAdvanceStage() {
+  if (isCelestialSpecies()) {
+    return false;
+  }
   return Boolean(getSpecies()) && state.stageIndex < STAGES.length - 1 && state.stageCompleted[state.stageIndex];
 }
 
 function isFinalStageComplete() {
-  return state.stageIndex === STAGES.length - 1 && state.stageCompleted[state.stageIndex];
+  return state.celestialComplete;
 }
 
 function resetRunProgress() {
@@ -353,9 +485,38 @@ function resetRunProgress() {
   markDirty();
 }
 
+function unlockCelestial() {
+  state.celestialUnlocked = true;
+  state.speciesId = "celestial";
+  state.mode = "play";
+  state.prestigeMultiplier = CELESTIAL_BONUS;
+  resetRunProgress();
+  playRankSound();
+  queueToast("A hidden signal answers. CELESTIAL stirs.");
+}
+
+function completeCelestial() {
+  if (state.celestialComplete) {
+    return;
+  }
+  state.celestialComplete = true;
+  state.resources = getThreshold();
+  state.rankProgress = state.resources;
+  playRankSound();
+  queueToast("CELESTIAL complete. Evolution finished.");
+  markDirty();
+}
+
 function syncStageCompletion() {
   const species = getSpecies();
-  if (!species || !isFinalRank() || !isCurrentRankComplete() || state.stageCompleted[state.stageIndex]) {
+  if (!species || !isCurrentRankComplete()) {
+    return;
+  }
+  if (isCelestialSpecies()) {
+    completeCelestial();
+    return;
+  }
+  if (!isFinalRank() || state.stageCompleted[state.stageIndex]) {
     return;
   }
   state.stageCompleted[state.stageIndex] = true;
@@ -364,13 +525,17 @@ function syncStageCompletion() {
     advanceStage();
     return;
   }
+  if (hasCompletedMainJourney() && !state.celestialUnlocked) {
+    unlockCelestial();
+    return;
+  }
   playRankSound();
   queueToast(`God ${species.name} complete. Stage 3 cleared.`);
 }
 
 function applyTheme() {
   const species = getThemeSpecies();
-  const signature = `${species.name}:${state.stageIndex}`;
+  const signature = `${species.name}:${state.stageIndex}:${Number(isCelestialSpecies())}`;
   if (renderCache.theme === signature) {
     return;
   }
@@ -379,6 +544,7 @@ function applyTheme() {
   document.documentElement.style.setProperty("--accent-secondary", species.colors.secondary);
   document.documentElement.style.setProperty("--accent-strong", species.colors.strong);
   document.documentElement.style.setProperty("--accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+  DOM.creatureDisplay.classList.toggle("is-celestial", isCelestialSpecies());
   renderCache.theme = signature;
 }
 
@@ -466,6 +632,20 @@ function spawnFloat(text, x, y) {
   window.setTimeout(() => entry.remove(), 900);
 }
 
+function spawnCelestialBurst(x, y) {
+  ["-18px", "0px", "18px"].forEach((dx, index) => {
+    const star = document.createElement("span");
+    star.className = "float-star";
+    star.textContent = "★";
+    star.style.setProperty("--x", x);
+    star.style.setProperty("--y", y);
+    star.style.setProperty("--dx", dx);
+    star.style.setProperty("--dy", `${index === 1 ? "-14px" : "0px"}`);
+    DOM.floatingLayer.appendChild(star);
+    window.setTimeout(() => star.remove(), 920);
+  });
+}
+
 function getSpeciesArt(speciesId, palette) {
   switch (speciesId) {
     case "ant":
@@ -520,107 +700,148 @@ function getSpeciesArt(speciesId, palette) {
           <rect x="88" y="114" width="64" height="10" fill="${palette.stroke}" />
           <rect x="88" y="132" width="64" height="10" fill="${palette.stroke}" />
           <rect x="88" y="150" width="64" height="10" fill="${palette.stroke}" />
-          <polygon class="tail" points="120,166 108,188 132,188" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />
+          <polygon class="tail" points="114,166 126,166 120,198" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />
           <rect class="eye eye-left" x="102" y="68" width="10" height="10" fill="${palette.stroke}" />
           <rect class="eye eye-right" x="128" y="68" width="10" height="10" fill="${palette.stroke}" />
           <rect class="mouth" x="110" y="82" width="20" height="4" fill="${rgba("#fff5cc", 0.48)}" />`
       };
     case "dog":
       return {
-        head: { x: 120, y: 92, w: 68, h: 60 },
-        body: { x: 120, y: 154, w: 116, h: 84 },
+        head: { x: 120, y: 92, w: 70, h: 60 },
+        body: { x: 120, y: 154, w: 118, h: 88 },
         markup: `<g fill="none" stroke="${palette.stroke}" stroke-width="8" stroke-linecap="square">
-            <path class="tail tail-right" d="M172 146 L194 126 L192 100" />
-            <path class="leg" d="M90 162 L90 194" /><path class="leg" d="M150 162 L150 194" />
-            <path class="leg" d="M72 158 L72 192" /><path class="leg" d="M168 158 L168 192" />
+            <path class="tail tail-right" d="M174 146 L200 124 L196 96" />
+            <path class="leg" d="M94 170 L94 202" /><path class="leg" d="M146 170 L146 202" />
+            <path class="leg" d="M76 166 L76 198" /><path class="leg" d="M164 166 L164 198" />
           </g>
-          <rect x="84" y="120" width="72" height="52" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="6" />
-          <rect x="92" y="58" width="56" height="52" fill="${palette.primary}" stroke="${palette.stroke}" stroke-width="6" />
-          <polygon class="ear ear-left" points="94,56 72,90 96,92" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
-          <polygon class="ear ear-right" points="146,56 168,90 144,92" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect class="arm arm-left" x="70" y="126" width="18" height="42" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect class="arm arm-right" x="152" y="126" width="18" height="42" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect x="84" y="118" width="72" height="56" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="6" />
+          <rect x="92" y="58" width="58" height="54" fill="${palette.primary}" stroke="${palette.stroke}" stroke-width="6" />
+          <polygon class="ear ear-left" points="94,56 70,92 96,94" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <polygon class="ear ear-right" points="148,56 172,92 146,94" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
           <rect class="eye eye-left" x="102" y="72" width="8" height="10" fill="${palette.stroke}" />
           <rect class="eye eye-right" x="130" y="72" width="8" height="10" fill="${palette.stroke}" />
-          <rect x="112" y="86" width="16" height="12" fill="${rgba("#fff0c9", 0.78)}" stroke="${palette.stroke}" stroke-width="4" />
-          <rect class="mouth" x="114" y="98" width="12" height="4" fill="${rgba("#ffffff", 0.32)}" />`
+          <rect x="104" y="84" width="34" height="18" fill="${rgba("#fff0c9", 0.82)}" stroke="${palette.stroke}" stroke-width="4" />
+          <rect x="116" y="86" width="10" height="8" fill="${palette.stroke}" />
+          <rect class="mouth" x="112" y="100" width="18" height="4" fill="${rgba("#ffffff", 0.34)}" />
+          <rect x="96" y="132" width="48" height="10" fill="${rgba("#ffffff", 0.12)}" />`
       };
     case "cat":
       return {
-        head: { x: 120, y: 88, w: 64, h: 58 },
-        body: { x: 120, y: 150, w: 104, h: 78 },
+        head: { x: 120, y: 90, w: 66, h: 60 },
+        body: { x: 120, y: 152, w: 108, h: 82 },
         markup: `<g fill="none" stroke="${palette.stroke}" stroke-width="7" stroke-linecap="square">
-            <path class="tail tail-right" d="M164 148 L188 122 L180 88" />
-            <path d="M104 94 L78 98" /><path d="M136 94 L162 98" />
-            <path d="M104 104 L78 110" /><path d="M136 104 L162 110" />
+            <path class="tail tail-right" d="M166 150 L192 124 L184 86" />
+            <path d="M104 96 L74 100" /><path d="M136 96 L166 100" />
+            <path d="M104 106 L74 112" /><path d="M136 106 L166 112" />
           </g>
-          <rect x="88" y="120" width="64" height="52" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="6" />
-          <rect x="92" y="58" width="56" height="50" fill="${palette.primary}" stroke="${palette.stroke}" stroke-width="6" />
-          <polygon class="ear ear-left" points="94,56 74,86 98,86" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
-          <polygon class="ear ear-right" points="146,56 166,86 142,86" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect class="arm arm-left" x="74" y="126" width="16" height="40" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect class="arm arm-right" x="150" y="126" width="16" height="40" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect x="88" y="120" width="64" height="54" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="6" />
+          <rect x="90" y="58" width="60" height="54" fill="${palette.primary}" stroke="${palette.stroke}" stroke-width="6" />
+          <polygon class="ear ear-left" points="92,56 70,88 98,88" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <polygon class="ear ear-right" points="148,56 170,88 142,88" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
           <rect class="eye eye-left" x="102" y="72" width="8" height="12" fill="${palette.stroke}" />
           <rect class="eye eye-right" x="130" y="72" width="8" height="12" fill="${palette.stroke}" />
-          <rect class="mouth" x="114" y="92" width="12" height="4" fill="${rgba("#ffffff", 0.28)}" />`
+          <rect x="108" y="88" width="24" height="16" fill="${rgba("#ffe7f3", 0.62)}" stroke="${palette.stroke}" stroke-width="4" />
+          <rect x="116" y="90" width="8" height="6" fill="${palette.stroke}" />
+          <rect class="mouth" x="114" y="102" width="12" height="4" fill="${rgba("#ffffff", 0.3)}" />
+          <rect x="96" y="132" width="48" height="10" fill="${rgba("#ffffff", 0.1)}" />`
       };
     case "koala":
       return {
-        head: { x: 120, y: 94, w: 72, h: 66 },
-        body: { x: 120, y: 154, w: 104, h: 84 },
+        head: { x: 120, y: 94, w: 74, h: 68 },
+        body: { x: 120, y: 154, w: 108, h: 88 },
         markup: `<circle class="ear ear-left" cx="90" cy="70" r="22" fill="${rgba("#ffffff", 0.82)}" stroke="${palette.stroke}" stroke-width="5" />
           <circle class="ear ear-right" cx="150" cy="70" r="22" fill="${rgba("#ffffff", 0.82)}" stroke="${palette.stroke}" stroke-width="5" />
-          <rect x="86" y="120" width="68" height="54" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="6" />
-          <rect x="90" y="60" width="60" height="60" fill="${palette.primary}" stroke="${palette.stroke}" stroke-width="6" />
+          <rect class="arm arm-left" x="72" y="126" width="18" height="42" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect class="arm arm-right" x="150" y="126" width="18" height="42" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect x="86" y="120" width="68" height="58" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="6" />
+          <rect x="88" y="60" width="64" height="62" fill="${palette.primary}" stroke="${palette.stroke}" stroke-width="6" />
           <rect class="eye eye-left" x="102" y="78" width="8" height="10" fill="${palette.stroke}" />
           <rect class="eye eye-right" x="130" y="78" width="8" height="10" fill="${palette.stroke}" />
-          <rect x="110" y="92" width="20" height="16" fill="${palette.stroke}" />
-          <rect class="mouth" x="114" y="110" width="12" height="4" fill="${rgba("#ffffff", 0.24)}" />`
+          <rect x="108" y="90" width="24" height="18" fill="${palette.stroke}" />
+          <rect class="mouth" x="114" y="112" width="12" height="4" fill="${rgba("#ffffff", 0.24)}" />
+          <rect x="96" y="132" width="48" height="10" fill="${rgba("#ffffff", 0.12)}" />`
       };
     case "shark":
       return {
-        head: { x: 98, y: 114, w: 58, h: 44 },
-        body: { x: 138, y: 120, w: 136, h: 70 },
-        markup: `<path d="M38 120 L78 90 H152 L196 104 L212 120 L196 136 L152 150 H78 Z" fill="${palette.primary}" stroke="${palette.stroke}" stroke-width="5" />
-          <polygon class="tail tail-left" points="38,120 10,98 16,120 10,142" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
-          <polygon class="fin" points="116,88 138,46 158,88" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
-          <polygon class="fin" points="128,132 154,154 126,152" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
-          <rect class="eye eye-right" x="82" y="108" width="8" height="8" fill="${palette.stroke}" />
-          <path class="mouth" d="M70 126 H114" stroke="${palette.stroke}" stroke-width="4" stroke-linecap="square" />
-          <path d="M74 126 L80 132 L86 126 L92 132 L98 126 L104 132 L110 126" stroke="${rgba("#ffffff", 0.62)}" stroke-width="3" fill="none" />`
+        head: { x: 186, y: 118, w: 54, h: 38 },
+        body: { x: 116, y: 122, w: 164, h: 72 },
+        markup: `<path d="M34 122 L70 92 H150 L194 98 L222 118 L194 138 L150 152 H70 Z" fill="${palette.primary}" stroke="${palette.stroke}" stroke-width="5" />
+          <polygon class="tail tail-left" points="34,122 6,98 16,122 6,146" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <polygon class="fin fin-top" points="106,92 126,46 148,92" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <polygon class="fin fin-bottom" points="110,140 136,160 108,154" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <path d="M150 100 L202 104 L224 118 L202 142 L150 144 Z" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <path d="M156 108 L196 112 L212 118 L196 128 L156 132 Z" fill="${rgba("#ffffff", 0.16)}" stroke="none" />
+          <rect class="eye eye-right" x="182" y="108" width="10" height="10" fill="${palette.stroke}" />
+          <path d="M162 112 L172 122" stroke="${palette.stroke}" stroke-width="4" fill="none" stroke-linecap="square" />
+          <path class="mouth" d="M188 128 Q202 132 216 126" stroke="${palette.stroke}" stroke-width="4" fill="none" stroke-linecap="square" />
+          <path d="M196 128 L202 134 L208 128" stroke="${rgba("#ffffff", 0.62)}" stroke-width="3" fill="none" />
+          <path d="M92 114 H144" stroke="${rgba("#ffffff", 0.14)}" stroke-width="5" stroke-linecap="square" />`
       };
     case "bear":
       return {
-        head: { x: 120, y: 92, w: 70, h: 64 },
-        body: { x: 120, y: 154, w: 116, h: 88 },
-        markup: `<circle class="ear ear-left" cx="92" cy="64" r="16" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
-          <circle class="ear ear-right" cx="148" cy="64" r="16" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
-          <rect x="86" y="122" width="68" height="56" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="6" />
-          <rect class="arm arm-left" x="70" y="126" width="18" height="42" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
-          <rect class="arm arm-right" x="152" y="126" width="18" height="42" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
-          <rect x="90" y="60" width="60" height="60" fill="${palette.primary}" stroke="${palette.stroke}" stroke-width="6" />
-          <rect class="eye eye-left" x="102" y="78" width="8" height="10" fill="${palette.stroke}" />
-          <rect class="eye eye-right" x="130" y="78" width="8" height="10" fill="${palette.stroke}" />
-          <rect x="108" y="92" width="24" height="14" fill="${rgba("#fff0c9", 0.68)}" stroke="${palette.stroke}" stroke-width="4" />
-          <rect class="mouth" x="114" y="106" width="12" height="4" fill="${rgba("#ffffff", 0.22)}" />`
+        head: { x: 120, y: 90, w: 74, h: 66 },
+        body: { x: 120, y: 154, w: 120, h: 90 },
+        markup: `<circle class="ear ear-left" cx="92" cy="66" r="15" fill="${rgba("#ffffff", 0.96)}" stroke="${palette.stroke}" stroke-width="5" />
+          <circle class="ear ear-right" cx="148" cy="66" r="15" fill="${rgba("#ffffff", 0.96)}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect x="82" y="120" width="76" height="58" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="6" />
+          <rect class="arm arm-left" x="64" y="124" width="20" height="46" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect class="arm arm-right" x="156" y="124" width="20" height="46" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect x="86" y="56" width="68" height="64" fill="${palette.primary}" stroke="${palette.stroke}" stroke-width="6" />
+          <rect class="eye eye-left" x="102" y="76" width="8" height="10" fill="${palette.stroke}" />
+          <rect class="eye eye-right" x="130" y="76" width="8" height="10" fill="${palette.stroke}" />
+          <rect x="104" y="88" width="32" height="20" fill="${rgba("#d8eefc", 0.96)}" stroke="${palette.stroke}" stroke-width="4" />
+          <rect x="116" y="92" width="8" height="8" fill="${palette.stroke}" />
+          <rect class="mouth" x="112" y="108" width="16" height="4" fill="${rgba("#ffffff", 0.28)}" />
+          <rect x="96" y="130" width="48" height="10" fill="${rgba("#ffffff", 0.18)}" />`
       };
     case "ape":
       return {
-        head: { x: 120, y: 88, w: 64, h: 60 },
-        body: { x: 120, y: 152, w: 108, h: 86 },
-        markup: `<rect x="88" y="120" width="64" height="58" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="6" />
-          <rect class="arm arm-left" x="64" y="122" width="20" height="56" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
-          <rect class="arm arm-right" x="156" y="122" width="20" height="56" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
-          <rect x="92" y="58" width="56" height="54" fill="${palette.primary}" stroke="${palette.stroke}" stroke-width="6" />
-          <circle class="ear ear-left" cx="92" cy="86" r="10" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />
-          <circle class="ear ear-right" cx="148" cy="86" r="10" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />
-          <rect class="eye eye-left" x="102" y="74" width="8" height="10" fill="${palette.stroke}" />
-          <rect class="eye eye-right" x="130" y="74" width="8" height="10" fill="${palette.stroke}" />
-          <rect x="106" y="88" width="28" height="18" fill="${rgba("#fff2cc", 0.68)}" stroke="${palette.stroke}" stroke-width="4" />
-          <rect class="mouth" x="112" y="102" width="16" height="4" fill="${rgba("#ffffff", 0.22)}" />`
+        head: { x: 120, y: 88, w: 78, h: 64 },
+        body: { x: 120, y: 154, w: 116, h: 92 },
+        markup: `<circle class="ear ear-left" cx="94" cy="68" r="12" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <circle class="ear ear-right" cx="146" cy="68" r="12" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect x="82" y="122" width="76" height="60" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="6" />
+          <rect class="arm arm-left" x="46" y="108" width="32" height="84" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect class="arm arm-right" x="162" y="108" width="32" height="84" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="5" />
+          <rect x="86" y="56" width="68" height="60" fill="${palette.primary}" stroke="${palette.stroke}" stroke-width="6" />
+          <rect x="94" y="68" width="52" height="16" fill="${rgba("#4b2b16", 0.52)}" stroke="none" />
+          <rect x="100" y="90" width="40" height="24" fill="${rgba("#e7c8ab", 0.94)}" stroke="${palette.stroke}" stroke-width="4" />
+          <rect class="eye eye-left" x="102" y="78" width="8" height="10" fill="${palette.stroke}" />
+          <rect class="eye eye-right" x="130" y="78" width="8" height="10" fill="${palette.stroke}" />
+          <rect x="112" y="92" width="4" height="8" fill="${palette.stroke}" />
+          <rect x="124" y="92" width="4" height="8" fill="${palette.stroke}" />
+          <rect class="mouth" x="108" y="108" width="24" height="4" fill="${rgba("#ffffff", 0.24)}" />
+          <rect x="96" y="134" width="48" height="10" fill="${rgba("#ffffff", 0.12)}" />`
+      };
+    case "celestial":
+      return {
+        head: { x: 120, y: 90, w: 82, h: 72 },
+        body: { x: 120, y: 150, w: 118, h: 100 },
+        markup: `<g class="celestial-aura-wrap">
+            <ellipse class="celestial-aura" cx="120" cy="122" rx="82" ry="72" fill="${rgba("#8ec5ff", 0.08)}" />
+            <ellipse class="celestial-aura celestial-aura--inner" cx="120" cy="126" rx="62" ry="50" fill="${rgba("#dff2ff", 0.08)}" />
+            <polygon class="celestial-star" points="56,74 60,82 70,84 62,90 64,100 56,95 48,100 50,90 42,84 52,82" fill="${rgba("#fff7cc", 0.9)}" />
+            <polygon class="celestial-star" points="180,68 184,76 194,78 186,84 188,94 180,89 172,94 174,84 166,78 176,76" fill="${rgba("#fff7cc", 0.84)}" />
+            <polygon class="celestial-star" points="168,164 172,172 182,174 174,180 176,190 168,185 160,190 162,180 154,174 164,172" fill="${rgba("#fff7cc", 0.78)}" />
+          </g>
+          <path class="celestial-silhouette" d="M70 170 L58 144 L72 120 L90 112 L90 88 L110 62 L130 62 L150 88 L150 110 L172 122 L186 144 L176 174 L144 190 H94 Z"
+            fill="#05070d" stroke="${rgba("#cfe6ff", 0.12)}" stroke-width="5" />
+          <path class="celestial-silhouette" d="M92 88 L82 70 L94 52 L108 62" fill="#05070d" stroke="${rgba("#cfe6ff", 0.1)}" stroke-width="5" />
+          <path class="celestial-silhouette" d="M148 88 L158 70 L146 52 L132 62" fill="#05070d" stroke="${rgba("#cfe6ff", 0.1)}" stroke-width="5" />
+          <rect class="celestial-eye" x="102" y="98" width="10" height="6" fill="${rgba("#dff5ff", 0.7)}" />
+          <rect class="celestial-eye" x="128" y="98" width="10" height="6" fill="${rgba("#dff5ff", 0.7)}" />
+          <path d="M104 116 H136" stroke="${rgba("#dff5ff", 0.22)}" stroke-width="4" stroke-linecap="square" />`
       };
     default:
       return getSpeciesArt("ant", palette);
   }
 }
 
-function getRankDecoration(rankIndex, art, palette) {
+function getRankDecoration(speciesId, rankIndex, art, palette) {
   const headLeft = art.head.x - art.head.w / 2;
   const headRight = art.head.x + art.head.w / 2;
   const headTop = art.head.y - art.head.h / 2;
@@ -628,44 +849,211 @@ function getRankDecoration(rankIndex, art, palette) {
   const bodyRight = art.body.x + art.body.w / 2;
   const bodyTop = art.body.y - art.body.h / 2;
   const bodyBottom = art.body.y + art.body.h / 2;
+  const stageTwoPet = speciesId === "dog" || speciesId === "cat" || speciesId === "koala";
+  const shark = speciesId === "shark";
+  const fly = speciesId === "fly";
+  const bee = speciesId === "bee";
+  const dog = speciesId === "dog";
+  const cat = speciesId === "cat";
+  const koala = speciesId === "koala";
+  const bear = speciesId === "bear";
+  const ape = speciesId === "ape";
+  const muscleY = stageTwoPet ? art.body.y - 12 : art.body.y - 18;
+  const muscleHeight = stageTwoPet ? 46 : 40;
+  const muscleWidth = stageTwoPet ? 30 : 28;
+  const leftMuscleX = stageTwoPet ? bodyLeft - 16 : bodyLeft - 22;
+  const rightMuscleX = stageTwoPet ? bodyRight - 14 : bodyRight - 6;
   let back = "";
   let front = "";
 
   if (rankIndex === 1) {
-    back = `<rect class="muscle arm-left" x="${bodyLeft - 18}" y="${art.body.y - 16}" width="22" height="32" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />
-      <rect class="muscle arm-right" x="${bodyRight - 4}" y="${art.body.y - 16}" width="22" height="32" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />`;
-    front = `<rect class="headband" x="${headLeft + 4}" y="${headTop + 14}" width="${Math.max(28, art.head.w - 8)}" height="12" fill="#ef4458" stroke="${palette.stroke}" stroke-width="3" />
-      <polygon class="headband-tail" points="${headRight - 2},${headTop + 20} ${headRight + 14},${headTop + 12} ${headRight + 10},${headTop + 28}" fill="#ef4458" stroke="${palette.stroke}" stroke-width="3" stroke-linejoin="round" />`;
+    if (shark) {
+      back = `<polygon class="muscle arm-left" points="${bodyLeft + 34},${art.body.y + 6} ${bodyLeft + 58},${art.body.y + 24} ${bodyLeft + 40},${art.body.y + 34} ${bodyLeft + 18},${art.body.y + 16}"
+        fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />
+        <polygon class="muscle arm-right" points="${bodyLeft + 82},${art.body.y + 4} ${bodyLeft + 108},${art.body.y + 22} ${bodyLeft + 86},${art.body.y + 34} ${bodyLeft + 62},${art.body.y + 14}"
+        fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />`;
+      front = `<rect class="headband" x="${headLeft + 10}" y="${headTop + 1}" width="${Math.max(20, art.head.w - 20)}" height="8" fill="#ef4458" stroke="${palette.stroke}" stroke-width="3" />
+        <polygon class="headband-tail" points="${headRight - 4},${headTop + 5} ${headRight + 8},${headTop + 2} ${headRight + 4},${headTop + 13}" fill="#ef4458" stroke="${palette.stroke}" stroke-width="3" stroke-linejoin="round" />`;
+    } else if (fly) {
+      back = `<rect class="muscle arm-left" x="${leftMuscleX}" y="${muscleY}" width="${muscleWidth}" height="${muscleHeight}" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />
+        <rect class="muscle arm-right" x="${rightMuscleX}" y="${muscleY}" width="${muscleWidth}" height="${muscleHeight}" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />`;
+      front = `<rect class="headband" x="${headLeft + 4}" y="${headTop + 2}" width="${Math.max(30, art.head.w - 8)}" height="9" fill="#ef4458" stroke="${palette.stroke}" stroke-width="3" />
+        <polygon class="headband-tail" points="${headRight - 4},${headTop + 7} ${headRight + 12},${headTop + 3} ${headRight + 8},${headTop + 17}" fill="#ef4458" stroke="${palette.stroke}" stroke-width="3" stroke-linejoin="round" />`;
+    } else if (bee) {
+      back = `<rect class="muscle arm-left" x="${leftMuscleX}" y="${muscleY + 2}" width="${muscleWidth}" height="${muscleHeight - 6}" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />
+        <rect class="muscle arm-right" x="${rightMuscleX}" y="${muscleY + 2}" width="${muscleWidth}" height="${muscleHeight - 6}" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />`;
+      front = `<rect class="headband" x="${headLeft + 2}" y="${headTop - 1}" width="${Math.max(30, art.head.w - 4)}" height="10" fill="#ef4458" stroke="${palette.stroke}" stroke-width="3" />
+        <polygon class="headband-tail" points="${headRight - 4},${headTop + 4} ${headRight + 10},${headTop} ${headRight + 6},${headTop + 14}" fill="#ef4458" stroke="${palette.stroke}" stroke-width="3" stroke-linejoin="round" />`;
+    } else if (dog) {
+      back = `<rect class="muscle arm-left" x="${leftMuscleX}" y="${muscleY}" width="${muscleWidth}" height="${muscleHeight}" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />
+        <rect class="muscle arm-right" x="${rightMuscleX}" y="${muscleY}" width="${muscleWidth}" height="${muscleHeight}" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />`;
+      front = `<rect class="headband" x="${headLeft + 4}" y="${headTop - 2}" width="${Math.max(32, art.head.w - 8)}" height="10" fill="#ef4458" stroke="${palette.stroke}" stroke-width="3" />
+        <polygon class="headband-tail" points="${headRight - 6},${headTop + 4} ${headRight + 14},${headTop - 1} ${headRight + 10},${headTop + 16}" fill="#ef4458" stroke="${palette.stroke}" stroke-width="3" stroke-linejoin="round" />`;
+    } else {
+      back = `<rect class="muscle arm-left" x="${leftMuscleX}" y="${muscleY}" width="${muscleWidth}" height="${muscleHeight}" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />
+        <rect class="muscle arm-right" x="${rightMuscleX}" y="${muscleY}" width="${muscleWidth}" height="${muscleHeight}" fill="${palette.secondary}" stroke="${palette.stroke}" stroke-width="4" />`;
+      front = `<rect class="headband" x="${headLeft + 2}" y="${headTop + 6}" width="${Math.max(32, art.head.w - 4)}" height="12" fill="#ef4458" stroke="${palette.stroke}" stroke-width="3" />
+        <polygon class="headband-tail" points="${headRight - 4},${headTop + 12} ${headRight + 14},${headTop + 4} ${headRight + 10},${headTop + 22}" fill="#ef4458" stroke="${palette.stroke}" stroke-width="3" stroke-linejoin="round" />`;
+    }
   }
 
   if (rankIndex === 2) {
-    back = `<path class="hair" d="M${headLeft + 8} ${headTop + 18} Q${art.head.x} ${bodyBottom + 10} ${headRight - 8} ${headTop + 18} Q${art.head.x} ${bodyTop + 42} ${headLeft + 8} ${headTop + 18} Z"
-      fill="${rgba(palette.secondary, 0.94)}" stroke="${palette.stroke}" stroke-width="4" />`;
-    front = `<polygon class="crown" points="${art.head.x - 24},${headTop + 6} ${art.head.x - 12},${headTop - 16} ${art.head.x},${headTop + 2} ${art.head.x + 12},${headTop - 16} ${art.head.x + 24},${headTop + 6}"
-      fill="#ffd96b" stroke="${palette.stroke}" stroke-width="4" stroke-linejoin="round" />`;
+    back = "";
+    if (shark) {
+      front = `<polygon class="crown" points="${art.head.x - 34},${headTop + 4} ${art.head.x - 24},${headTop - 14} ${art.head.x - 14},${headTop + 1} ${art.head.x - 4},${headTop - 14} ${art.head.x + 8},${headTop + 4}"
+        fill="#ffd96b" stroke="${palette.stroke}" stroke-width="4" stroke-linejoin="round" />
+        <rect class="crown-glint" x="${art.head.x - 22}" y="${headTop - 6}" width="8" height="20" fill="${rgba("#fffdf0", 0.68)}" stroke="none" transform="rotate(18 ${art.head.x - 18} ${headTop + 4})" />`;
+    } else {
+      front = `<polygon class="crown" points="${art.head.x - 24},${headTop + 6} ${art.head.x - 12},${headTop - 16} ${art.head.x},${headTop + 2} ${art.head.x + 12},${headTop - 16} ${art.head.x + 24},${headTop + 6}"
+        fill="#ffd96b" stroke="${palette.stroke}" stroke-width="4" stroke-linejoin="round" />
+        <rect class="crown-glint" x="${art.head.x - 8}" y="${headTop - 6}" width="8" height="22" fill="${rgba("#fffdf0", 0.68)}" stroke="none" transform="rotate(18 ${art.head.x - 4} ${headTop + 5})" />`;
+    }
   }
 
   if (rankIndex === 3) {
-    front = `<rect class="cyber-plate" x="${bodyLeft + 10}" y="${bodyTop + 10}" width="${Math.max(30, art.body.w - 20)}" height="${Math.max(28, art.body.h - 18)}"
-      fill="${palette.metal}" stroke="${rgba("#ffffff", 0.7)}" stroke-width="4" />
-      <rect class="cyber-plate" x="${headLeft + 8}" y="${headTop + 10}" width="${Math.max(28, art.head.w - 16)}" height="${Math.max(22, art.head.h - 18)}"
-      fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.7)}" stroke-width="4" />
-      <rect class="visor" x="${headLeft + 8}" y="${art.head.y - 8}" width="${Math.max(24, art.head.w - 16)}" height="16"
-      fill="#47ecff" stroke="${palette.stroke}" stroke-width="4" />
-      <circle class="cyber-core" cx="${art.body.x}" cy="${art.body.y}" r="7" fill="#47ecff" stroke="${palette.stroke}" stroke-width="3" />`;
+    const bodyInset = stageTwoPet ? 8 : 10;
+    const bodyPlateHeight = stageTwoPet ? Math.max(34, art.body.h - 14) : Math.max(28, art.body.h - 18);
+    const headInset = stageTwoPet ? 6 : 8;
+    const headPlateY = stageTwoPet ? headTop + 12 : headTop + 10;
+    if (shark) {
+      front = `<path class="cyber-plate" d="M${bodyLeft + 36} ${bodyTop + 18} H${bodyRight - 92} L${bodyRight - 74} ${bodyTop + 28} H${bodyLeft + 56} Z"
+        fill="${palette.metal}" stroke="${rgba("#ffffff", 0.76)}" stroke-width="4" />
+        <path class="cyber-plate" d="M${bodyLeft + 76} ${bodyBottom - 24} H${bodyLeft + 112} L${bodyLeft + 126} ${bodyBottom - 12} H${bodyLeft + 88} Z"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <path class="cyber-plate" d="M${headLeft + 12} ${headTop + 10} H${headRight - 20} L${headRight - 6} ${headTop + 18} L${headRight - 16} ${headTop + 32} H${headLeft + 20} Z"
+        fill="${rgba("#9fb4ca", 0.26)}" stroke="${rgba("#ffffff", 0.76)}" stroke-width="4" />
+        <rect class="visor" x="${headLeft + 20}" y="${art.head.y - 8}" width="${Math.max(12, art.head.w - 36)}" height="8"
+        fill="#47ecff" stroke="${palette.stroke}" stroke-width="4" />
+        <path class="cyber-plate" d="M${headLeft + 22} ${art.head.y + 8} H${headRight - 18} L${headRight - 10} ${art.head.y + 16} H${headLeft + 30} Z"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.7)}" stroke-width="4" />
+        <path d="M${bodyLeft + 88} ${art.body.y - 2} H${bodyLeft + 122}" stroke="#47ecff" stroke-width="4" stroke-linecap="square" />
+        <polygon class="cyber-plate" points="14,122 0,110 8,122 0,134" fill="${rgba("#9fb4ca", 0.24)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <circle class="cyber-core" cx="${bodyLeft + 104}" cy="${art.body.y}" r="7" fill="#47ecff" stroke="${palette.stroke}" stroke-width="3" />`;
+    } else if (dog) {
+      front = `<rect class="cyber-plate" x="${bodyLeft + 18}" y="${bodyTop + 18}" width="${Math.max(30, art.body.w - 36)}" height="${Math.max(28, art.body.h - 34)}"
+        fill="${palette.metal}" stroke="${rgba("#ffffff", 0.76)}" stroke-width="4" />
+        <rect class="cyber-plate" x="${bodyLeft + 30}" y="${bodyTop + 10}" width="${Math.max(30, art.body.w - 60)}" height="10"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <polygon class="cyber-plate" points="${headLeft + 10},${headTop + 12} ${headRight - 18},${headTop + 12} ${headRight - 8},${headTop + 22} ${headRight - 20},${headTop + 34} ${headLeft + 18},${headTop + 34}"
+        fill="${rgba("#9fb4ca", 0.26)}" stroke="${rgba("#ffffff", 0.74)}" stroke-width="4" />
+        <polygon class="cyber-plate" points="${headLeft + 10},${headTop + 12} ${headLeft + 2},${headTop - 6} ${headLeft + 20},${headTop + 10}"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.7)}" stroke-width="4" />
+        <polygon class="cyber-plate" points="${headRight - 10},${headTop + 12} ${headRight - 2},${headTop - 6} ${headRight - 20},${headTop + 10}"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.7)}" stroke-width="4" />
+        <rect class="visor" x="${headLeft + 18}" y="${art.head.y - 8}" width="${Math.max(20, art.head.w - 36)}" height="8"
+        fill="#47ecff" stroke="${palette.stroke}" stroke-width="4" />
+        <rect class="cyber-plate" x="${headLeft + 24}" y="${art.head.y + 8}" width="${Math.max(22, art.head.w - 40)}" height="10"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.7)}" stroke-width="4" />
+        <circle class="cyber-core" cx="${art.body.x}" cy="${art.body.y + 2}" r="8" fill="#47ecff" stroke="${palette.stroke}" stroke-width="3" />`;
+    } else if (cat) {
+      front = `<rect class="cyber-plate" x="${bodyLeft + 16}" y="${bodyTop + 18}" width="${Math.max(28, art.body.w - 32)}" height="${Math.max(28, art.body.h - 30)}"
+        fill="${palette.metal}" stroke="${rgba("#ffffff", 0.74)}" stroke-width="4" />
+        <polygon class="cyber-plate" points="${headLeft + 10},${headTop + 14} ${headRight - 10},${headTop + 14} ${headRight - 14},${headTop + 34} ${headLeft + 14},${headTop + 34}"
+        fill="${rgba("#9fb4ca", 0.24)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <polygon class="cyber-plate" points="${headLeft + 10},${headTop + 14} ${headLeft + 2},${headTop - 10} ${headLeft + 18},${headTop + 12}"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <polygon class="cyber-plate" points="${headRight - 10},${headTop + 14} ${headRight - 2},${headTop - 10} ${headRight - 18},${headTop + 12}"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="visor" x="${headLeft + 14}" y="${art.head.y - 8}" width="${Math.max(20, art.head.w - 28)}" height="8"
+        fill="#47ecff" stroke="${palette.stroke}" stroke-width="4" />
+        <rect class="cyber-plate" x="${art.body.x - 18}" y="${bodyTop + 22}" width="36" height="8"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <path d="M${headLeft + 18} ${art.head.y + 10} H${headLeft + 30}" stroke="#47ecff" stroke-width="4" stroke-linecap="square" />
+        <path d="M${headRight - 30} ${art.head.y + 10} H${headRight - 18}" stroke="#47ecff" stroke-width="4" stroke-linecap="square" />
+        <circle class="cyber-core" cx="${art.body.x}" cy="${art.body.y + 2}" r="7" fill="#47ecff" stroke="${palette.stroke}" stroke-width="3" />`;
+    } else if (koala) {
+      front = `<rect class="cyber-plate" x="${bodyLeft + 12}" y="${bodyTop + 16}" width="${Math.max(34, art.body.w - 24)}" height="${Math.max(32, art.body.h - 26)}"
+        fill="${palette.metal}" stroke="${rgba("#ffffff", 0.74)}" stroke-width="4" />
+        <circle class="cyber-plate" cx="90" cy="70" r="12" fill="${rgba("#9fb4ca", 0.28)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <circle class="cyber-plate" cx="150" cy="70" r="12" fill="${rgba("#9fb4ca", 0.28)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="cyber-plate" x="${headLeft + 12}" y="${headTop + 16}" width="${Math.max(26, art.head.w - 24)}" height="${Math.max(24, art.head.h - 30)}"
+        fill="${rgba("#9fb4ca", 0.26)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="visor" x="${headLeft + 18}" y="${art.head.y - 8}" width="${Math.max(16, art.head.w - 36)}" height="10"
+        fill="#47ecff" stroke="${palette.stroke}" stroke-width="4" />
+        <rect class="cyber-plate" x="${headLeft + 24}" y="${art.head.y + 8}" width="${Math.max(14, art.head.w - 48)}" height="12"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="cyber-plate" x="${art.body.x - 16}" y="${bodyTop + 24}" width="32" height="10"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <circle class="cyber-core" cx="${art.body.x}" cy="${art.body.y}" r="7" fill="#47ecff" stroke="${palette.stroke}" stroke-width="3" />`;
+    } else if (bear) {
+      front = `<rect class="cyber-plate" x="${bodyLeft + 10}" y="${bodyTop + 14}" width="${Math.max(36, art.body.w - 20)}" height="${Math.max(34, art.body.h - 24)}"
+        fill="${palette.metal}" stroke="${rgba("#ffffff", 0.76)}" stroke-width="4" />
+        <rect class="cyber-plate" x="${bodyLeft + 8}" y="${bodyTop + 16}" width="20" height="18"
+        fill="${rgba("#9fb4ca", 0.24)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="cyber-plate" x="${bodyRight - 28}" y="${bodyTop + 16}" width="20" height="18"
+        fill="${rgba("#9fb4ca", 0.24)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="cyber-plate" x="${bodyLeft + 26}" y="${bodyTop + 8}" width="${Math.max(26, art.body.w - 52)}" height="10"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="cyber-plate" x="${headLeft + 10}" y="${headTop + 12}" width="${Math.max(28, art.head.w - 20)}" height="${Math.max(24, art.head.h - 24)}"
+        fill="${rgba("#9fb4ca", 0.26)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="visor" x="${headLeft + 16}" y="${art.head.y - 8}" width="${Math.max(20, art.head.w - 32)}" height="10"
+        fill="#47ecff" stroke="${palette.stroke}" stroke-width="4" />
+        <rect class="cyber-plate" x="${headLeft + 22}" y="${art.head.y + 10}" width="${Math.max(16, art.head.w - 44)}" height="10"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <circle class="cyber-core" cx="${art.body.x}" cy="${art.body.y}" r="8" fill="#47ecff" stroke="${palette.stroke}" stroke-width="3" />`;
+    } else if (ape) {
+      front = `<rect class="cyber-plate" x="${bodyLeft + 14}" y="${bodyTop + 16}" width="${Math.max(34, art.body.w - 28)}" height="${Math.max(34, art.body.h - 24)}"
+        fill="${palette.metal}" stroke="${rgba("#ffffff", 0.76)}" stroke-width="4" />
+        <rect class="cyber-plate" x="${bodyLeft - 2}" y="${bodyTop + 20}" width="18" height="${Math.max(30, art.body.h - 22)}"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="cyber-plate" x="${bodyRight - 16}" y="${bodyTop + 20}" width="18" height="${Math.max(30, art.body.h - 22)}"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="cyber-plate" x="${headLeft + 12}" y="${headTop + 14}" width="${Math.max(28, art.head.w - 24)}" height="${Math.max(24, art.head.h - 24)}"
+        fill="${rgba("#9fb4ca", 0.24)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="visor" x="${headLeft + 16}" y="${art.head.y - 8}" width="${Math.max(20, art.head.w - 32)}" height="10"
+        fill="#47ecff" stroke="${palette.stroke}" stroke-width="4" />
+        <rect class="cyber-plate" x="${art.body.x - 22}" y="${art.body.y - 4}" width="44" height="10"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <circle class="cyber-core" cx="${art.body.x}" cy="${art.body.y + 10}" r="8" fill="#47ecff" stroke="${palette.stroke}" stroke-width="3" />`;
+    } else if (fly) {
+      front = `<rect class="cyber-plate" x="${headLeft + 2}" y="${headTop + 4}" width="${Math.max(38, art.head.w - 4)}" height="18"
+        fill="${rgba("#9fb4ca", 0.24)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="visor" x="${headLeft + 6}" y="${headTop + 8}" width="${Math.max(30, art.head.w - 12)}" height="10"
+        fill="#47ecff" stroke="${palette.stroke}" stroke-width="4" />
+        <rect class="cyber-plate" x="${bodyLeft + 8}" y="${bodyTop + 8}" width="${Math.max(40, art.body.w - 16)}" height="${Math.max(34, art.body.h - 28)}"
+        fill="${palette.metal}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="cyber-plate" x="${art.body.x - 12}" y="${bodyBottom - 12}" width="24" height="18"
+        fill="${rgba("#9fb4ca", 0.24)}" stroke="${rgba("#ffffff", 0.72)}" stroke-width="4" />
+        <rect class="cyber-plate" x="58" y="86" width="22" height="12" fill="${rgba("#9fb4ca", 0.2)}" stroke="${rgba("#ffffff", 0.62)}" stroke-width="3" />
+        <rect class="cyber-plate" x="160" y="86" width="22" height="12" fill="${rgba("#9fb4ca", 0.2)}" stroke="${rgba("#ffffff", 0.62)}" stroke-width="3" />
+        <path d="M80 92 H94" stroke="#47ecff" stroke-width="4" stroke-linecap="square" />
+        <path d="M146 92 H160" stroke="#47ecff" stroke-width="4" stroke-linecap="square" />
+        <circle class="cyber-core" cx="${art.body.x}" cy="${art.body.y}" r="7" fill="#47ecff" stroke="${palette.stroke}" stroke-width="3" />`;
+    } else {
+      front = `<rect class="cyber-plate" x="${bodyLeft + bodyInset}" y="${bodyTop + 10}" width="${Math.max(30, art.body.w - bodyInset * 2)}" height="${bodyPlateHeight}"
+        fill="${palette.metal}" stroke="${rgba("#ffffff", 0.7)}" stroke-width="4" />
+        <rect class="cyber-plate" x="${headLeft + headInset}" y="${headPlateY}" width="${Math.max(28, art.head.w - headInset * 2)}" height="${Math.max(22, art.head.h - 18)}"
+        fill="${rgba("#9fb4ca", 0.22)}" stroke="${rgba("#ffffff", 0.7)}" stroke-width="4" />
+        <rect class="visor" x="${headLeft + headInset}" y="${art.head.y - 8}" width="${Math.max(24, art.head.w - headInset * 2)}" height="16"
+        fill="#47ecff" stroke="${palette.stroke}" stroke-width="4" />
+        <circle class="cyber-core" cx="${art.body.x}" cy="${art.body.y}" r="7" fill="#47ecff" stroke="${palette.stroke}" stroke-width="3" />`;
+    }
   }
 
   if (rankIndex === 4) {
-    back = `<ellipse class="aura" cx="${art.body.x}" cy="${art.body.y - 14}" rx="${Math.max(48, art.body.w * 0.72)}" ry="${Math.max(44, art.body.h * 0.62)}"
-      fill="${rgba(palette.primary, 0.18)}" />
-      <ellipse class="aura" cx="${art.body.x}" cy="${art.body.y - 14}" rx="${Math.max(34, art.body.w * 0.52)}" ry="${Math.max(28, art.body.h * 0.42)}"
-      fill="${rgba("#ffffff", 0.12)}" />
-      <rect class="sparkle" x="${art.body.x - 44}" y="${art.body.y - 54}" width="8" height="8" fill="#fff7cc" />
-      <rect class="sparkle" x="${art.body.x + 36}" y="${art.body.y - 38}" width="8" height="8" fill="#fff7cc" />`;
-    front = `<ellipse class="halo" cx="${art.head.x}" cy="${headTop - 10}" rx="${Math.max(20, art.head.w * 0.44)}" ry="8" fill="none" stroke="#fff4b8" stroke-width="5" />
-      <polygon class="crown" points="${art.head.x - 20},${headTop + 4} ${art.head.x - 10},${headTop - 12} ${art.head.x},${headTop + 1} ${art.head.x + 10},${headTop - 12} ${art.head.x + 20},${headTop + 4}"
-      fill="#ffe99c" stroke="${palette.stroke}" stroke-width="4" stroke-linejoin="round" />
-      <circle class="sparkle" cx="${art.head.x}" cy="${headTop - 22}" r="5" fill="#ffffff" stroke="${palette.stroke}" stroke-width="3" />`;
+    if (shark) {
+      back = `<ellipse class="aura" cx="${art.body.x + 10}" cy="${art.body.y - 8}" rx="${Math.max(70, art.body.w * 0.92)}" ry="${Math.max(34, art.body.h * 0.48)}"
+        fill="${rgba(palette.primary, 0.18)}" />
+        <ellipse class="aura" cx="${art.body.x + 6}" cy="${art.body.y - 10}" rx="${Math.max(54, art.body.w * 0.7)}" ry="${Math.max(20, art.body.h * 0.28)}"
+        fill="${rgba("#ffffff", 0.12)}" />
+        <rect class="sparkle" x="${art.body.x - 44}" y="${art.body.y - 54}" width="8" height="8" fill="#fff7cc" />
+        <rect class="sparkle" x="${art.body.x + 40}" y="${art.body.y - 34}" width="8" height="8" fill="#fff7cc" />`;
+      front = `<ellipse class="halo" cx="${art.head.x - 12}" cy="${headTop - 18}" rx="${Math.max(18, art.head.w * 0.34)}" ry="6" fill="none" stroke="#fff4b8" stroke-width="5" />
+        <polygon class="crown" points="${art.head.x - 28},${headTop + 1} ${art.head.x - 18},${headTop - 14} ${art.head.x - 8},${headTop - 2} ${art.head.x + 2},${headTop - 14} ${art.head.x + 12},${headTop + 1}"
+        fill="#ffe99c" stroke="${palette.stroke}" stroke-width="4" stroke-linejoin="round" />
+        <circle class="sparkle" cx="${art.head.x - 2}" cy="${headTop - 24}" r="5" fill="#ffffff" stroke="${palette.stroke}" stroke-width="3" />`;
+    } else {
+      back = `<ellipse class="aura" cx="${art.body.x}" cy="${art.body.y - 14}" rx="${Math.max(48, art.body.w * 0.72)}" ry="${Math.max(44, art.body.h * 0.62)}"
+        fill="${rgba(palette.primary, 0.18)}" />
+        <ellipse class="aura" cx="${art.body.x}" cy="${art.body.y - 14}" rx="${Math.max(34, art.body.w * 0.52)}" ry="${Math.max(28, art.body.h * 0.42)}"
+        fill="${rgba("#ffffff", 0.12)}" />
+        <rect class="sparkle" x="${art.body.x - 44}" y="${art.body.y - 54}" width="8" height="8" fill="#fff7cc" />
+        <rect class="sparkle" x="${art.body.x + 36}" y="${art.body.y - 38}" width="8" height="8" fill="#fff7cc" />`;
+      front = `<ellipse class="halo" cx="${art.head.x}" cy="${headTop - 10}" rx="${Math.max(20, art.head.w * 0.44)}" ry="8" fill="none" stroke="#fff4b8" stroke-width="5" />
+        <polygon class="crown" points="${art.head.x - 20},${headTop + 4} ${art.head.x - 10},${headTop - 12} ${art.head.x},${headTop + 1} ${art.head.x + 10},${headTop - 12} ${art.head.x + 20},${headTop + 4}"
+        fill="#ffe99c" stroke="${palette.stroke}" stroke-width="4" stroke-linejoin="round" />
+        <circle class="sparkle" cx="${art.head.x}" cy="${headTop - 22}" r="5" fill="#ffffff" stroke="${palette.stroke}" stroke-width="3" />`;
+    }
   }
 
   return { back, front };
@@ -681,7 +1069,7 @@ function buildCreatureSvg(speciesId, rankIndex) {
     metal: "rgba(164, 191, 218, 0.62)"
   };
   const art = getSpeciesArt(speciesId, palette);
-  const decoration = getRankDecoration(rankIndex, art, palette);
+  const decoration = getRankDecoration(speciesId, rankIndex, art, palette);
 
   return `<svg class="creature-svg creature-svg--${speciesId}" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="presentation" shape-rendering="crispEdges">
       <ellipse cx="120" cy="212" rx="56" ry="12" fill="rgba(0, 0, 0, 0.28)" />
@@ -746,12 +1134,21 @@ function renderSelection() {
 
 function renderHud(snapshot) {
   const species = getSpecies();
-  DOM.stageValue.textContent = getStage().label;
+  const celestial = isCelestialSpecies();
+  DOM.stageValue.textContent = celestial ? "Secret" : getStage().label;
   DOM.resourceLabelValue.textContent = species ? `${species.resource} Total` : "Choose Animal";
   DOM.resourceTotalValue.textContent = formatNumber(state.resources);
   DOM.resourcePerSecondValue.textContent = `${formatNumber(getPassivePerSecond(snapshot))} / sec`;
-  DOM.formEyebrow.textContent = species ? `${getStage().label} / ${getRank().label} rank` : `${getStage().label} / selection`;
-  DOM.formTitle.textContent = species ? getFormName() : `Choose ${getStage().label} Animal`;
+  if (!species) {
+    DOM.formEyebrow.textContent = `${getStage().label} / selection`;
+    DOM.formTitle.textContent = `Choose ${getStage().label} Animal`;
+  } else if (celestial) {
+    DOM.formEyebrow.textContent = state.celestialComplete ? "FINAL SIGNAL / EVOLUTION COMPLETE" : "FINAL SIGNAL / HIDDEN ASCENT";
+    DOM.formTitle.textContent = "CELESTIAL";
+  } else {
+    DOM.formEyebrow.textContent = `${getStage().label} / ${getRank().label} rank`;
+    DOM.formTitle.textContent = getFormName();
+  }
   DOM.muteButton.textContent = state.mute ? "SFX OFF" : "SFX ON";
   DOM.muteButton.setAttribute("aria-pressed", String(!state.mute));
 }
@@ -769,8 +1166,8 @@ function renderMainCreature() {
   const size = getMainCreatureSize();
   const scale = getMainCreatureScale();
   DOM.mainCreatureWrap.style.visibility = "visible";
-  DOM.mainCreatureLabel.textContent = species.name.toUpperCase();
-  DOM.mainRankChip.textContent = getRank().label.toUpperCase();
+  DOM.mainCreatureLabel.textContent = isCelestialSpecies() ? "CELESTIAL" : species.name.toUpperCase();
+  DOM.mainRankChip.textContent = isCelestialSpecies() ? "CELESTIAL" : getRank().label.toUpperCase();
   DOM.mainResourceChip.textContent = species.resource.toUpperCase();
   DOM.mainCreatureButton.disabled = state.mode !== "play";
   DOM.mainCreatureButton.setAttribute("aria-label", `Collect ${species.resource}`);
@@ -958,10 +1355,18 @@ function renderShop(snapshot) {
   const species = getSpecies();
   const helperTotal = state.helperCounts.reduce((sum, count) => sum + count, 0);
   DOM.shopStatusValue.textContent = species
-    ? `${formatNumber(helperTotal)} helpers / ${state.ownedUpgrades.length} upgrades`
+    ? isCelestialSpecies()
+      ? state.celestialComplete
+        ? `Final form awake / ${formatNumber(helperTotal)} helpers`
+        : `Hidden ascent / ${formatNumber(helperTotal)} helpers`
+      : `${formatNumber(helperTotal)} helpers / ${state.ownedUpgrades.length} upgrades`
     : "Build helpers and upgrades";
   DOM.nextTargetValue.textContent = species
-    ? `Next: ${getNextRank() ? `${getNextRank().label} ${species.name}` : state.stageIndex < STAGES.length - 1 ? `${STAGES[state.stageIndex + 1].label} unlock` : "Final clear"}`
+    ? isCelestialSpecies()
+      ? state.celestialComplete
+        ? "Evolution Complete"
+        : "Next: CELESTIAL"
+      : `Next: ${getNextRank() ? `${getNextRank().label} ${species.name}` : state.stageIndex < STAGES.length - 1 ? `${STAGES[state.stageIndex + 1].label} unlock` : "Final clear"}`
     : "Next: choose animal";
   renderHelpersList(snapshot);
   renderUpgradesList();
@@ -992,6 +1397,7 @@ function renderProgress() {
       : "Pick a stage animal to start the run.";
   }
   const isReady = canRankUp();
+  DOM.evolutionCard.hidden = false;
   DOM.evolutionCard.classList.toggle("is-ready", isReady);
   if (progressStack) {
     progressStack.hidden = false;
@@ -1006,14 +1412,18 @@ function renderProgress() {
     DOM.progressTitle.textContent = `Choose ${getStage().label} Animal`;
     return;
   }
-  if (isFinalStageComplete()) {
-    DOM.progressTitle.textContent = `Final God ${species.name} Reached`;
+  if (isCelestialSpecies()) {
     DOM.evolutionCard.classList.remove("is-ready");
+    if (state.celestialComplete) {
+      DOM.evolutionCard.hidden = true;
+      return;
+    }
+    DOM.progressTitle.textContent = "Ascend To CELESTIAL";
     if (progressMeterFill) {
-      progressMeterFill.style.width = "100%";
+      progressMeterFill.style.width = progressPercent;
     }
     if (progressMeterLabel) {
-      progressMeterLabel.textContent = `${formatNumber(getThreshold())} / ${formatNumber(getThreshold())} ${species.resource}`;
+      progressMeterLabel.textContent = `${formatNumber(getCurrentProgressValue())} / ${formatNumber(getThreshold())} STARS`;
     }
     return;
   }
@@ -1152,7 +1562,10 @@ function handleCreatureClick(event) {
   void DOM.mainCreatureButton.offsetWidth;
   DOM.mainCreatureButton.classList.add("is-pressing");
   window.setTimeout(() => DOM.mainCreatureButton.classList.remove("is-pressing"), 260);
-  spawnFloat(`+${formatNumber(clickValue)}`, point.x, point.y);
+  spawnFloat(`${isCelestialSpecies() ? "★" : "+"}${formatNumber(clickValue)}`, point.x, point.y);
+  if (isCelestialSpecies()) {
+    spawnCelestialBurst(point.x, point.y);
+  }
   playClickSound();
 }
 
@@ -1180,6 +1593,10 @@ function loop(now) {
     renderAll();
     state.uiDirty = false;
     state.lastRenderAt = now;
+  }
+  if (state.saveDirty && now - state.lastSaveAt > 900) {
+    saveState();
+    state.lastSaveAt = now;
   }
   window.requestAnimationFrame(loop);
 }
@@ -1216,9 +1633,11 @@ function bindEvents() {
 }
 
 function init() {
+  loadState();
   bindEvents();
   applyTheme();
   renderAll();
+  window.addEventListener("beforeunload", saveState);
   window.requestAnimationFrame(loop);
 }
 

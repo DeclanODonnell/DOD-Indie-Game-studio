@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AFTER HOURS | DOD Web Arcade</title>
+  <meta
+    name="description"
+    content="Private-room 4-player bluffing card game built for DOD Web Arcade."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="icon" type="image/png" href="../../dodwebarcadelogo.png">
+  <link rel="stylesheet" href="../arcade-mini-base.css?v=arcade-mini-1">
+  <link rel="stylesheet" href="style.css?v=after-hours-3">
+</head>
+<body>
+  <div class="page-shell" data-fullscreen-root>
+    <header class="topbar">
+      <a class="brand" href="../../index.html" aria-label="Back to arcade">
+        <span class="brand-mark">
+          <img class="brand-mark-image" src="../../dodwebarcadelogo.png" alt="DOD Web Arcade logo">
+        </span>
+        <span class="brand-copy">
+          <strong>AFTER HOURS</strong>
+          <span>Back to arcade</span>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <span class="room-pill" id="roomCodeChip" hidden>ROOM ----</span>
+        <button class="topbar-button topbar-button-ghost" id="soundToggle" type="button">Sound On</button>
+        <button class="topbar-button topbar-button-ghost" data-fullscreen-button type="button">Fullscreen</button>
+      </div>
+    </header>
+
+    <main class="game-main after-hours-main">
+      <section class="game-head">
+        <h1>AFTER HOURS</h1>
+        <p class="intro-copy">Private-room bluffing for four seats only. Read the table, hide the truth, and survive the callout.</p>
+      </section>
+
+      <section class="after-hours-shell">
+        <section class="panel setup-screen" id="setupScreen">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Room Entry</p>
+              <h2>Join the table.</h2>
+            </div>
+            <span class="panel-copy">Nickname + avatar. No accounts.</span>
+          </div>
+
+          <div class="setup-grid">
+            <div class="setup-card">
+              <label class="field-label" for="nicknameInput">Nickname</label>
+              <input id="nicknameInput" class="text-input" type="text" maxlength="16" placeholder="Enter nickname">
+
+              <div class="avatar-builder">
+                <div class="avatar-preview-card">
+                  <span class="field-label">Avatar</span>
+                  <div class="avatar-preview" id="avatarPreview" aria-hidden="true"></div>
+                </div>
+
+                <div class="avatar-controls">
+                  <div class="avatar-control">
+                    <span class="field-label">Colour</span>
+                    <div class="option-row swatch-row" id="colorOptions"></div>
+                  </div>
+
+                  <div class="avatar-control">
+                    <span class="field-label">Hair</span>
+                    <div class="option-row" id="hairOptions"></div>
+                  </div>
+
+                  <div class="avatar-control">
+                    <span class="field-label">Hair Colour</span>
+                    <div class="option-row swatch-row" id="hairColorOptions"></div>
+                  </div>
+
+                  <div class="avatar-control">
+                    <span class="field-label">Glasses</span>
+                    <div class="option-row" id="glassesOptions"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="setup-card">
+              <div class="setup-actions">
+                <button id="createRoomButton" class="action-button action-button-primary" type="button">Create Room</button>
+              </div>
+
+              <div class="join-divider">or join with a room code</div>
+
+              <label class="field-label" for="joinCodeInput">Room Code</label>
+              <input id="joinCodeInput" class="text-input text-input-code" type="text" maxlength="5" placeholder="ABCDE">
+
+              <div class="setup-actions">
+                <button id="joinRoomButton" class="action-button action-button-ghost" type="button">Join Room</button>
+              </div>
+
+              <p class="setup-note" id="connectionNote">4 seats only. Hidden hands stay server-side.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel lobby-screen" id="lobbyScreen" hidden>
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Private Lobby</p>
+              <h2 id="lobbyHeading">Room ----</h2>
+            </div>
+            <span class="panel-copy" id="lobbyCopy">Fill all four seats to start.</span>
+          </div>
+
+          <div class="lobby-grid">
+            <section class="lobby-panel">
+              <div class="room-code-card">
+                <span class="field-label">Room Code</span>
+                <strong id="lobbyRoomCode">-----</strong>
+              </div>
+
+              <div class="lobby-controls" id="hostControls">
+                <button id="addBotButton" class="action-button action-button-ghost" type="button">Add Bot</button>
+                <button id="startGameButton" class="action-button action-button-primary" type="button">Start Match</button>
+                <button id="endRoomButton" class="action-button action-button-ghost" type="button">End Room</button>
+              </div>
+
+              <div class="prompt-banner" id="lobbyPromptBanner" hidden>
+                <div>
+                  <strong>Are you still here?</strong>
+                  <p id="lobbyPromptCopy">Keep the room alive.</p>
+                </div>
+                <button id="keepLobbyAliveButton" class="action-button action-button-primary" type="button">Keep Open</button>
+              </div>
+            </section>
+
+            <section class="lobby-panel">
+              <div class="seat-list" id="lobbySeats"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="table-screen" id="tableScreen" hidden>
+          <div class="table-layout">
+            <section class="panel table-panel">
+              <div class="panel-head table-head">
+                <div>
+                  <p class="eyebrow">Neon Table</p>
+                  <h2 id="tableHeading">Match live.</h2>
+                </div>
+                <div class="table-head-chips">
+                  <span class="room-pill" id="tableStatusChip">Waiting</span>
+                  <span class="timer-pill" id="turnTimerChip">30s</span>
+                </div>
+              </div>
+
+              <div class="table-stage" id="tableStage">
+                <div class="table-felt">
+                  <div class="seat-layer" id="seatLayer"></div>
+                  <div class="elimination-layer" id="eliminationLayer"></div>
+
+                  <div class="pile-zone">
+                    <div class="pile-stack" id="pileStack"></div>
+                    <div class="claim-banner" id="claimBanner">No claim yet.</div>
+                    <div class="table-message" id="tableMessage">Fill all four seats to start.</div>
+                  </div>
+
+                  <div class="overlay-panel table-overlay" id="countdownOverlay" hidden>
+                    <div class="overlay-box">
+                      <p class="result-label">Match Start</p>
+                      <h2 id="countdownValue">3</h2>
+                      <p class="result-copy">Cards are being dealt.</p>
+                    </div>
+                  </div>
+
+                  <div class="overlay-panel table-overlay" id="roundInfoOverlay" hidden>
+                    <div class="overlay-box">
+                      <p class="result-label" id="roundInfoLabel">Round Briefing</p>
+                      <h2 id="roundInfoTitle">Round briefing</h2>
+                      <p class="result-copy" id="roundInfoCopy">Each suit carries 12 cards.</p>
+                      <p class="action-note" id="roundInfoFooter">Watch the table, not just your hand.</p>
+                    </div>
+                  </div>
+
+                  <div class="overlay-panel table-overlay" id="revealOverlay" hidden>
+                    <div class="overlay-box reveal-box">
+                      <p class="result-label" id="revealLabel">Reveal</p>
+                      <h2 id="revealTitle">Truth on the table.</h2>
+                      <p class="result-copy" id="revealCopy">A bluff was called.</p>
+                      <div class="reveal-cards" id="revealCards"></div>
+                    </div>
+                  </div>
+
+                  <div class="overlay-panel table-overlay" id="winnerOverlay" hidden>
+                    <div class="overlay-box winner-box">
+                      <p class="result-label">Winner</p>
+                      <div class="winner-avatar" id="winnerAvatar"></div>
+                      <h2 id="winnerTitle">Winner</h2>
+                      <p class="result-copy" id="winnerCopy">Ready up for the rematch.</p>
+                      <div class="result-actions">
+                        <button id="readyRematchButton" class="action-button action-button-primary" type="button">Ready Up</button>
+                        <button id="winnerEndRoomButton" class="action-button action-button-ghost" type="button">End Room</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hand-panel">
+                <div class="hand-top">
+                  <div>
+                    <p class="eyebrow">Your Hand</p>
+                    <h3 id="handHeading">Pick 1 to 3 cards.</h3>
+                  </div>
+                  <span class="panel-copy" id="handStatus">Waiting for the host.</span>
+                </div>
+
+                <div class="play-controls">
+                  <label class="claim-field">
+                    <span class="field-label">Claim Rank</span>
+                    <select id="claimRankSelect" class="text-input claim-select"></select>
+                  </label>
+                  <button id="playCardsButton" class="action-button action-button-primary" type="button">Play Cards</button>
+                  <button id="callBluffButton" class="action-button action-button-ghost" type="button">Call Bluff</button>
+                </div>
+
+                <div class="hand-row" id="handRow"></div>
+              </div>
+            </section>
+
+            <aside class="table-side">
+              <section class="panel side-panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Match Log</p>
+                    <h3>Running feed</h3>
+                  </div>
+                </div>
+                <div class="event-log" id="eventLog"></div>
+              </section>
+            </aside>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <p id="afterHoursStatus" class="sr-only" aria-live="polite">AFTER HOURS ready.</p>
+  </div>
+
+  <script src="../../fullscreen.js?v=after-hours-2"></script>
+  <script src="vendor/signalr.min.js"></script>
+  <script src="script.js?v=after-hours-4"></script>
+</body>
+</html>

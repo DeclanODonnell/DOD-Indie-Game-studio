@@ -502,6 +502,15 @@ h3,
   isolation: isolate;
 }
 
+.creature-display.is-celestial {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(120, 170, 255, 0.16), transparent 24%),
+    radial-gradient(circle at 22% 18%, rgba(255, 247, 204, 0.08), transparent 12%),
+    radial-gradient(circle at 78% 24%, rgba(255, 247, 204, 0.06), transparent 10%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
+    linear-gradient(180deg, rgba(5, 7, 12, 0.98), rgba(2, 3, 8, 1));
+}
+
 .display-status {
   position: absolute;
   top: 10px;
@@ -541,6 +550,18 @@ h3,
     linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   background-size: auto, auto, 30px 30px, 30px 30px;
+}
+
+.creature-display.is-celestial .display-grid {
+  background:
+    radial-gradient(circle at 16% 18%, rgba(255, 247, 204, 0.18) 0 2px, transparent 3px),
+    radial-gradient(circle at 26% 62%, rgba(205, 231, 255, 0.14) 0 2px, transparent 3px),
+    radial-gradient(circle at 54% 14%, rgba(255, 247, 204, 0.18) 0 2px, transparent 3px),
+    radial-gradient(circle at 68% 72%, rgba(205, 231, 255, 0.14) 0 2px, transparent 3px),
+    radial-gradient(circle at 86% 28%, rgba(255, 247, 204, 0.18) 0 2px, transparent 3px),
+    linear-gradient(rgba(255, 255, 255, 0.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
+  background-size: auto, auto, auto, auto, auto, 34px 34px, 34px 34px;
 }
 
 .helper-layer {
@@ -685,6 +706,8 @@ h3,
 .creature-svg .arm,
 .creature-svg .hair,
 .creature-svg .headband-tail,
+.creature-svg .crown,
+.creature-svg .crown-glint,
 .creature-svg .halo,
 .creature-svg .aura,
 .creature-svg .sparkle,
@@ -719,6 +742,14 @@ h3,
   animation: hair-sway 1.7s steps(2, end) infinite alternate;
 }
 
+.creature-svg .crown {
+  animation: halo-float 2.2s ease-in-out infinite alternate;
+}
+
+.creature-svg .crown-glint {
+  animation: crown-glint 1.5s ease-in-out infinite alternate;
+}
+
 .creature-svg .visor {
   animation: visor-scan 1.6s linear infinite;
 }
@@ -741,6 +772,29 @@ h3,
 
 .creature-svg .mouth {
   opacity: 0.78;
+}
+
+.creature-svg--celestial {
+  filter: drop-shadow(0 0 24px rgba(177, 214, 255, 0.22)) drop-shadow(0 0 40px rgba(77, 123, 255, 0.16));
+}
+
+.creature-svg--celestial .celestial-aura,
+.creature-svg--celestial .celestial-aura--inner {
+  animation: celestial-pulse 2.8s ease-in-out infinite alternate;
+}
+
+.creature-svg--celestial .celestial-star {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: celestial-star-pop 1.9s steps(2, end) infinite alternate;
+}
+
+.creature-svg--celestial .celestial-silhouette {
+  filter: drop-shadow(0 0 12px rgba(162, 205, 255, 0.08));
+}
+
+.creature-svg--celestial .celestial-eye {
+  animation: celestial-eye 1.5s ease-in-out infinite alternate;
 }
 
 .helper-node {
@@ -779,6 +833,18 @@ h3,
   text-shadow: 0 0 14px rgba(var(--accent-rgb), 0.36);
   transform: translate(-50%, -50%);
   animation: float-up 820ms ease forwards;
+}
+
+.float-star {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  color: #fff5ba;
+  font-family: "Press Start 2P", sans-serif;
+  font-size: 0.72rem;
+  text-shadow: 0 0 18px rgba(205, 231, 255, 0.42), 0 0 24px rgba(255, 247, 204, 0.28);
+  transform: translate(-50%, -50%);
+  animation: float-star 900ms ease forwards;
 }
 
 .evolution-card {
@@ -1196,6 +1262,17 @@ h3,
   }
 }
 
+@keyframes crown-glint {
+  0% {
+    opacity: 0.22;
+    transform: rotate(18deg) translateX(-2px);
+  }
+  100% {
+    opacity: 0.82;
+    transform: rotate(18deg) translateX(5px);
+  }
+}
+
 @keyframes float-up {
   0% {
     opacity: 0;
@@ -1207,6 +1284,51 @@ h3,
   100% {
     opacity: 0;
     transform: translate(-50%, -46px) scale(1);
+  }
+}
+
+@keyframes float-star {
+  0% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px))) scale(0.42);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx, 0px)), calc(-120% + var(--dy, 0px))) scale(1.08);
+  }
+}
+
+@keyframes celestial-pulse {
+  0% {
+    opacity: 0.54;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes celestial-star-pop {
+  0% {
+    opacity: 0.48;
+    transform: scale(0.82);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes celestial-eye {
+  0% {
+    opacity: 0.42;
+  }
+  100% {
+    opacity: 0.9;
   }
 }
 
